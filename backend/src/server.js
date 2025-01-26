@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import loanRoutes from "./routes/loans.js";
+import userRoutes from "./routes/user.js";
 
 dotenv.config();
 const app = express();
@@ -15,6 +16,7 @@ app.use(express.json());
 connectDB();
 
 // Routes
+app.use("/api/user", userRoutes);
 app.use("/api/loans", loanRoutes);
 
 const PORT = process.env.PORT || 5000;
