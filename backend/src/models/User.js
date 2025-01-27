@@ -14,6 +14,11 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+const validateSriLankanPhoneNumber = (phoneNumber) => {
+  const regex = /^(?:\+94|0)(?:\d{9}|\d{2}-\d{7}|\d{2} \d{7})$/;
+  return regex.test(phoneNumber);
+};
+
 // Static method for user signup
 userSchema.statics.signup = async function (
   username,
@@ -32,8 +37,13 @@ userSchema.statics.signup = async function (
   }
 
   // Validate telephone
-  if (!validator.isMobilePhone(telephone)) {
-    throw Error("Telephone number is not valid");
+  // if (!validator.isMobilePhone(telephone)) {
+  //   throw Error("Telephone number is not valid");
+  // }
+
+  // Validate Sri Lankan phone number
+  if (!validateSriLankanPhoneNumber(telephone)) {
+    throw Error("Telephone number is not valid for Sri Lanka");
   }
 
   // Validate password strength

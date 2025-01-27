@@ -1,10 +1,14 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import validator from "validator";
 import mongoose from "mongoose";
 
+// CREATE TOKEN
 const createToken = (_id, username) => {
-  return jwt.sign({ _id, username }, process.env.SECRET_KEY, { expiresIn: "3d" });
+  return jwt.sign({ _id, username }, process.env.SECRET_KEY, {
+    expiresIn: "3d",
+  });
 };
 
 // LOGIN user
@@ -45,6 +49,76 @@ const signupUser = async (req, res) => {
   } catch (error) {
     res.status(400).json({ error: error.message });
     console.error(error);
+  }
+};
+
+const validateSriLankanPhoneNumber = (phoneNumber) => {
+  const regex = /^(?:\+94|0)(?:\d{9}|\d{2}-\d{7}|\d{2} \d{7})$/;
+  return regex.test(phoneNumber);
+};
+
+//update user
+const updateUser = async (req, res) => {
+  const { id } = req.params;
+  const { username, email, telephone, password } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ error: "Invalid user ID" });
+  }
+
+  // Ensure at least one field is being updated
+  if (!username && !email && !telephone && !password) {
+    return res
+      .status(400)
+      .json({ error: "At least one field must be provided to update" });
+  }
+
+  // Validate fields individually if they are provided
+  if (email && !validator.isEmail(email)) {
+    return res.status(400).json({ error: "Email is not valid" });
+  }
+
+  if (telephone && !validateSriLankanPhoneNumber(telephone)) {
+    return res
+      .status(400)
+      .json({ error: "Telephone number is not valid for Sri Lanka" });
+  }
+
+  if (
+    password &&
+    !validator.isStrongPassword(password, {
+      minLength: 6,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1,
+    })
+  ) {
+    return res.status(400).json({
+      error:
+        "Password must be at least 6 characters long and include a number, uppercase letter, and symbol.",
+    });
+  }
+
+  try {
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Update only the fields that are provided
+    if (username) user.username = username;
+    if (email) user.email = email;
+    if (telephone) user.telephone = telephone;
+    if (password) user.password = password;
+
+    await user.save();
+
+    res.status(200).json({ message: "User updated successfully", user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -123,7 +197,6 @@ const resetPassword = async (req, res) => {
 // GET USER
 const getUser = async (req, res) => {
   const { id } = req.params;
-  console.log(`Request received for user ID: ${id}`);
 
   try {
     const user = await User.findById(id);
@@ -172,4 +245,5 @@ export {
   resetPassword,
   getUser,
   deleteUser,
+  updateUser,
 };
