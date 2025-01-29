@@ -1,5 +1,5 @@
-import Loan from "../models/Loan"; // Adjust the path as per your project structure
-import Payment from "../models/Payment"; // Adjust the path as per your project structure
+import Loan from "../models/Loan.js";
+import Payment from "../models/Payment.js";
 
 // Make a payment
 export const makePayment = async (req, res) => {
@@ -14,23 +14,33 @@ export const makePayment = async (req, res) => {
     // Find an active loan for the given NIC
     const existingLoan = await Loan.findOne({ nic, status: "active" });
     if (!existingLoan) {
-      return res.status(400).json({ error: "No active loan found for this NIC" });
+      return res
+        .status(400)
+        .json({ error: "No active loan found for this NIC" });
     }
 
     // Check if the payment exceeds the due amount
-    const { totalAmount, installmentAmount, numOfInstallments } = existingLoan;
-    const payments = await Payment.find({ loanId: existingLoan._id });
+    const { installmentAmount, numOfInstallments, dueAmount } = existingLoan;
 
-    const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
-    const remainingAmount = totalAmount - totalPaid;
+    console.log(dueAmount)
 
-    if (amount > remainingAmount) {
-      return res.status(400).json({ error: "Payment exceeds the remaining loan amount" });
+    if (installmentAmount !== amount && installmentAmount < 0) {
+      return res
+        .status(400)
+        .json({ error: "Invalid payment amount or already paid" });
     }
+
+    if (amount > dueAmount) {
+      return res
+        .status(400)
+        .json({ error: "Payment exceeds the remaining loan amount" });
+    }
+
+    const remainingAmount = dueAmount - amount;
 
     // Update loan status if fully paid
     let updatedStatus = "active";
-    if (remainingAmount - amount <= 0) {
+    if (remainingAmount <= 0) {
       updatedStatus = "paid";
     }
 
@@ -38,14 +48,19 @@ export const makePayment = async (req, res) => {
     const payment = new Payment({
       loanId: existingLoan._id,
       nic,
-      amount,
+      paidAmount: amount,
       date,
-      remainingAmount: remainingAmount - amount,
+      dueAmount: remainingAmount - amount,
     });
     await payment.save();
 
     // Update the loan status
-    await Loan.findByIdAndUpdate(existingLoan._id, { status: updatedStatus });
+    await Loan.findByIdAndUpdate(
+      existingLoan._id,
+      { status: updatedStatus },
+      { dueAmount: remainingAmount },
+      { numOfInstallments: numOfInstallments - 1 }
+    );
 
     res.status(201).json({
       message: "Payment successful",

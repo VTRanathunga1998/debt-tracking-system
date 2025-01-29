@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import loanRoutes from "./routes/loans.js";
 import userRoutes from "./routes/user.js";
+import paymentRoutes from "./routes/payment.js";
 
 dotenv.config();
 const app = express();
@@ -18,6 +19,7 @@ connectDB();
 // Routes
 app.use("/api/user", userRoutes);
 app.use("/api/loans", loanRoutes);
+app.use("/api/payments", paymentRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
