@@ -4,9 +4,11 @@ import validator from "validator";
 
 const userSchema = new mongoose.Schema(
   {
-    username: { type: String, required: true, unique: true, index: true },
+    nic: { type: String, required: true, unique: true, index: true },
     email: { type: String, required: true, unique: true, index: true },
+    name: { type: String, required: true },
     telephone: { type: String, required: true },
+    address: { type: String, required: true },
     password: { type: String, required: true },
   },
   {
