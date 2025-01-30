@@ -21,6 +21,14 @@ const loanSchema = new mongoose.Schema({
         "numOfInstallments must be greater than 0 for installment loans.",
     },
   },
+  nextInstallmentDate: {
+    type: Date,
+    default: function () {
+      return new Date(this.startDate).setMonth(
+        new Date(this.startDate).getMonth() + 1
+      );
+    },
+  },
   dueDate: {
     type: Date,
     required: function () {

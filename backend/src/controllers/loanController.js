@@ -31,11 +31,9 @@ export const createLoan = async (req, res) => {
     if (repaymentType === "installment") {
       // Ensure numOfInstallments is provided
       if (!numOfInstallments || numOfInstallments <= 0) {
-        return res
-          .status(400)
-          .json({
-            error: "Number of installments required for installment loan",
-          });
+        return res.status(400).json({
+          error: "Number of installments required for installment loan",
+        });
       }
 
       // Calculate total interest and total amount

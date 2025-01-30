@@ -5,7 +5,6 @@ const paymentSchema = new mongoose.Schema({
   nic: { type: String, required: true },
   paidAmount: { type: Number, required: true },
   date: { type: Date, default: Date.now },
-  dueAmount: { type: Number, required: true },
 });
 
 const Payment = mongoose.model("Payment", paymentSchema);
