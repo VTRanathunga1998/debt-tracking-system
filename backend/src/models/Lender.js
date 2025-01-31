@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import validator from "validator";
 
-const userSchema = new mongoose.Schema(
+const lenderSchema = new mongoose.Schema(
   {
     nic: { type: String, required: true, unique: true, index: true },
     email: { type: String, required: true, unique: true, index: true },
@@ -10,6 +10,11 @@ const userSchema = new mongoose.Schema(
     telephone: { type: String, required: true },
     address: { type: String, required: true },
     password: { type: String, required: true },
+    account: {
+      balance: { type: Number, default: 0 },
+      totalLent: { type: Number, default: 0 },
+      interestEarned: { type: Number, default: 0 },
+    },
   },
   {
     timestamps: true,
@@ -21,15 +26,18 @@ const validateSriLankanPhoneNumber = (phoneNumber) => {
   return regex.test(phoneNumber);
 };
 
-// Static method for user signup
-userSchema.statics.signup = async function (
-  username,
+// Static method for lender signup
+lenderSchema.statics.signup = async function (
+  nic,
   email,
+  name,
   telephone,
-  password
+  address,
+  password,
+  account
 ) {
   // Validate all fields
-  if (!email || !password || !username || !telephone) {
+  if (!nic || !email || !name || !password || !telephone || !address) {
     throw Error("All fields must be filled");
   }
 
@@ -37,11 +45,6 @@ userSchema.statics.signup = async function (
   if (!validator.isEmail(email)) {
     throw Error("Email is not valid");
   }
-
-  // Validate telephone
-  // if (!validator.isMobilePhone(telephone)) {
-  //   throw Error("Telephone number is not valid");
-  // }
 
   // Validate Sri Lankan phone number
   if (!validateSriLankanPhoneNumber(telephone)) {
@@ -70,44 +73,53 @@ userSchema.statics.signup = async function (
   }
 
   // Check if username already exists
-  const existsUsername = await this.findOne({ username });
-  if (existsUsername) {
-    throw Error("Username already in use");
+  const existsUser = await this.findOne({ nic });
+  if (existsUser) {
+    throw Error("User already in use");
   }
 
   // Hash password
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(password, salt);
 
-  // Create user
-  const userData = { email, username, password: hash, telephone };
-  const user = await this.create(userData);
+  // Create lender
+  const lenderData = {
+    nic,
+    email,
+    name,
+    telephone,
+    address,
+    password: hash,
+    ...(account && { account }),
+  };
 
-  return user;
+  const lender = await this.create(lenderData);
+
+  return lender;
 };
 
-// Static method for user login
-userSchema.statics.login = async function (email, password) {
+// Static method for lender login
+lenderSchema.statics.login = async function (email, password) {
   // Validate fields
   if (!email || !password) {
     throw Error("All fields must be filled");
   }
 
-  // Find user by email
-  const user = await this.findOne({ email });
-  if (!user) {
+  // Find lender by email
+  const lender = await this.findOne({ email });
+  if (!lender) {
     throw Error("Incorrect email");
   }
 
   // Compare passwords
-  const match = await bcrypt.compare(password, user.password);
+  const match = await bcrypt.compare(password, lender.password);
   if (!match) {
     throw Error("Incorrect password");
   }
 
-  return user;
+  return lender;
 };
 
-const User = mongoose.model("User", userSchema);
+const Lender = mongoose.model("Lender", lenderSchema);
 
-export default User;
+export default Lender;
