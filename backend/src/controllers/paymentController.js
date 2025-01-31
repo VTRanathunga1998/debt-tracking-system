@@ -3,8 +3,8 @@ import Payment from "../models/Payment.js";
 import moment from "moment";
 
 // Helper function to validate required fields
-const validateRequiredFields = (nic, amount, date) => {
-  if (!nic || !amount || !date) {
+const validateRequiredFields = (nic, payAmount, date) => {
+  if (!nic || !payAmount || !date) {
     throw new Error("All fields are required");
   }
 };
@@ -47,6 +47,7 @@ const validatePaymentDate = (
 
 // Helper function to validate payment amount
 const validatePaymentAmount = (
+  payAmount,
   amount,
   requiredPayment,
   repaymentType,
@@ -54,17 +55,30 @@ const validatePaymentAmount = (
   dueAmount,
   monthsGap
 ) => {
-  if (amount < requiredPayment) {
+  if (payAmount < requiredPayment) {
     throw new Error(
       `You need to pay at least ${requiredPayment} as ${monthsGap} installments are due.`
     );
   }
 
-  if (repaymentType === "installment" && amount % installmentAmount !== 0) {
+  if (
+    payAmount > requiredPayment &&
+    payAmount - amount !== installmentAmount * monthsGap
+  ) {
+    throw new Error(
+      `You need to pay only ${requiredPayment} as ${monthsGap} installments are due.`
+    );
+  }
+
+  if (repaymentType === "installment" && payAmount % installmentAmount !== 0) {
     throw new Error("Amount should be a multiple of installment amount");
   }
 
-  if (amount > dueAmount) {
+  if (repaymentType !== "installment" && payAmount % installmentAmount !== 0) {
+    throw new Error("Amount should be a multiple of installment amount");
+  }
+
+  if (repaymentType === "installment" && payAmount > dueAmount) {
     throw new Error("Payment exceeds the remaining loan amount");
   }
 };
@@ -87,24 +101,24 @@ const checkDuplicatePayment = async (loanId, paymentDate) => {
 // Helper function to update loan details after payment
 const updateLoanDetails = async (
   loan,
-  amount,
+  payAmount,
   coveredInstallments,
   monthsGap,
   repaymentType
 ) => {
-  let remainingAmount = Math.max(0, loan.dueAmount - amount);
-  let updatedNumOfInstallments = loan.numOfInstallments - coveredInstallments;
-  let updatedStatus = remainingAmount > 0 ? "active" : "paid";
+  let remainingAmount;
+  let updatedNumOfInstallments;
+  let updatedStatus;
 
   if (repaymentType === "installment") {
-    remainingAmount = Math.max(0, loan.dueAmount - amount);
+    remainingAmount = Math.max(0, loan.dueAmount - payAmount);
     updatedNumOfInstallments = loan.numOfInstallments - coveredInstallments;
     updatedStatus = remainingAmount > 0 ? "active" : "paid";
   } else {
-    remainingAmount = amount;
+    remainingAmount = loan.amount;
     updatedNumOfInstallments = loan.numOfInstallments;
 
-    if (loan.amount - amount == loan.installmentAmount * monthsGap) {
+    if (payAmount - loan.amount == loan.installmentAmount * monthsGap) {
       updatedStatus = "paid";
     } else {
       updatedStatus = "active";
@@ -135,10 +149,10 @@ const updateLoanDetails = async (
 // Main function to handle payment
 export const makePayment = async (req, res) => {
   try {
-    const { nic, amount, date } = req.body;
+    const { nic, payAmount, date } = req.body;
 
     // Validate required fields
-    validateRequiredFields(nic, amount, date);
+    validateRequiredFields(nic, payAmount, date);
 
     // Parse the date in the correct format
     const paymentDate = moment(date, "YYYY-M-D").startOf("month");
@@ -146,7 +160,8 @@ export const makePayment = async (req, res) => {
     // Find an active loan for the given NIC
     const existingLoan = await findActiveLoan(nic);
 
-    const { installmentAmount, dueAmount, repaymentType } = existingLoan;
+    const { installmentAmount, dueAmount, repaymentType, amount } =
+      existingLoan;
 
     // Find the last payment or use the loan start date
     const lastPayment = await Payment.findOne({
@@ -173,6 +188,7 @@ export const makePayment = async (req, res) => {
 
     // Validate payment amount
     validatePaymentAmount(
+      payAmount,
       amount,
       requiredPayment,
       repaymentType,
@@ -191,7 +207,7 @@ export const makePayment = async (req, res) => {
     // Update loan details
     const { remainingAmount, updatedStatus } = await updateLoanDetails(
       existingLoan,
-      amount,
+      payAmount,
       coveredInstallments,
       monthsGap,
       repaymentType
