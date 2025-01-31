@@ -43,6 +43,7 @@ const loanSchema = new mongoose.Schema({
     enum: ["active", "paid", "overdue"],
     default: "active",
   },
+  lenderId: { type: mongoose.Schema.Types.ObjectId, ref: "Lender" },
 });
 
 // Pre-save hook to dynamically calculate fields
@@ -62,11 +63,15 @@ loanSchema.pre("save", function (next) {
       (this.amount * this.interestRate * this.numOfInstallments) / 100;
 
     // Calculate installment amount
-    this.installmentAmount = this.totalAmount / this.numOfInstallments;
+    this.installmentAmount = Math.round(
+      this.totalAmount / this.numOfInstallments
+    );
   } else if (this.repaymentType === "interest-only") {
     this.numOfInstallments = 0; // No installments
     this.totalAmount = this.amount; // Principal remains unchanged
-    this.installmentAmount = (this.amount * this.interestRate) / 100; // Monthly interest payment
+    this.installmentAmount = Math.round(
+      (this.amount * this.interestRate) / 100
+    ); // Monthly interest payment
     this.dueDate = undefined; // No fixed due date
   }
 

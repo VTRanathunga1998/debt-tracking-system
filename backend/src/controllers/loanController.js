@@ -1,5 +1,6 @@
 import moment from "moment";
 import Loan from "../models/Loan.js";
+import Lender from "../models/Lender.js";
 
 // Create a new loan
 export const createLoan = async (req, res) => {
@@ -13,12 +14,15 @@ export const createLoan = async (req, res) => {
       repaymentType,
     } = req.body;
 
+    // Temporary lender ID (Replace with actual authentication logic)
+    const lenderId = "679cc95aa66cef6fe11e850b";
+
     // Validate required fields
     if (!nic || !amount || !interestRate || !startDate || !repaymentType) {
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    // Check if there is an active loan for the same NIC
+    // Check if an active loan already exists for this NIC
     const existingLoan = await Loan.findOne({ nic, status: "active" });
     if (existingLoan) {
       return res
@@ -26,34 +30,47 @@ export const createLoan = async (req, res) => {
         .json({ error: "An active loan already exists for this NIC" });
     }
 
+    // Fetch lender details
+    const lender = await Lender.findById(lenderId);
+    if (!lender) {
+      return res.status(404).json({ error: "Lender not found" });
+    }
+
+    // Check if lender has enough balance
+    if (lender.account.balance < amount) {
+      return res
+        .status(400)
+        .json({ error: "Insufficient funds in lender's account" });
+    }
+
     let totalAmount, installmentAmount, totalInterest, dueDate;
 
     if (repaymentType === "installment") {
-      // Ensure numOfInstallments is provided
       if (!numOfInstallments || numOfInstallments <= 0) {
         return res.status(400).json({
           error: "Number of installments required for installment loan",
         });
       }
 
-      // Calculate total interest and total amount
       totalInterest = (amount * interestRate * numOfInstallments) / 100;
       totalAmount = amount + totalInterest;
-
-      // Calculate monthly installment
-      installmentAmount = totalAmount / numOfInstallments;
-
-      // Set due date based on installments
+      installmentAmount = Math.round(totalAmount / numOfInstallments).toFixed(
+        0
+      );
       dueDate = moment(startDate).add(numOfInstallments, "months").toDate();
     } else if (repaymentType === "interest-only") {
-      // Interest-only loan setup
-      totalAmount = amount; // Principal remains unchanged
-      totalInterest = 0; // No total interest calculation required
-      installmentAmount = (amount * interestRate) / 100; // Monthly interest
-      dueDate = undefined; // No fixed due date for interest-only loans
+      totalAmount = amount;
+      totalInterest = 0;
+      installmentAmount = Math.round((amount * interestRate) / 100).toFixed(0);
+      dueDate = undefined;
     } else {
       return res.status(400).json({ error: "Invalid repayment type" });
     }
+
+    // Deduct loan amount from lender's balance
+    lender.account.balance -= amount;
+    lender.account.totalLent += amount;
+    await lender.save(); // Save updated lender balance
 
     // Create the loan object
     const loan = new Loan({
@@ -68,10 +85,12 @@ export const createLoan = async (req, res) => {
       installmentAmount,
       dueAmount: totalAmount, // Initially, dueAmount = totalAmount
       repaymentType,
+      lenderId,
     });
 
     // Save the loan in the database
     await loan.save();
+
     res.status(201).json(loan);
   } catch (error) {
     res.status(400).json({ error: error.message });

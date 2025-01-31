@@ -1,4 +1,5 @@
 import Loan from "../models/Loan.js";
+import Lender from "../models/Lender.js";
 import Payment from "../models/Payment.js";
 import moment from "moment";
 
@@ -142,6 +143,26 @@ const updateLoanDetails = async (
     numOfInstallments: updatedNumOfInstallments,
     nextInstallmentDate: nextInstallmentDate,
   });
+
+  // Update lender's account
+  const lender = await Lender.findById(loan.lenderId);
+  if (lender) {
+    lender.account.balance += payAmount;
+
+    let interestEarned;
+
+    if (repaymentType === "installment") {
+      interestEarned = loan.amount * loan.interestRate;
+    } else {
+      interestEarned = payAmount;
+    }
+
+    if (interestEarned > 0) {
+      lender.account.interestEarned += interestEarned;
+    }
+
+    await lender.save();
+  }
 
   return { remainingAmount, updatedStatus };
 };
