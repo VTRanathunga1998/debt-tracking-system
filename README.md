@@ -19,7 +19,7 @@ This project has two main directories:
 
 1. **Frontend**
 
-   - Built using React.js for an intuitive and responsive user interface.
+   - Built using Next.js for an intuitive and responsive user interface.
    - Includes components for borrower management, payment schedules, and dashboards.
 
 2. **Backend**
