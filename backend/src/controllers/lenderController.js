@@ -4,8 +4,8 @@ import validator from "validator";
 import mongoose from "mongoose";
 
 // CREATE TOKEN
-const createToken = (_id, username) => {
-  return jwt.sign({ _id, username }, process.env.SECRET_KEY, {
+const createToken = (_id, nic) => {
+  return jwt.sign({ _id, nic }, process.env.SECRET_KEY, {
     expiresIn: "3d",
   });
 };
@@ -18,7 +18,7 @@ const loginLender = async (req, res) => {
     const lender = await Lender.login(email, password);
 
     // Create token
-    const token = createToken(lender._id, lender.username);
+    const token = createToken(lender._id, lender.nic);
 
     res.status(200).json({
       email,
