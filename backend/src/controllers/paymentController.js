@@ -54,7 +54,9 @@ const validatePaymentAmount = (
   repaymentType,
   installmentAmount,
   dueAmount,
-  monthsGap
+  monthsGap,
+  paymentDate,
+  dueDate
 ) => {
   if (payAmount < requiredPayment) {
     throw new Error(
@@ -79,7 +81,11 @@ const validatePaymentAmount = (
     throw new Error("Amount should be a multiple of installment amount");
   }
 
-  if (repaymentType === "installment" && payAmount > dueAmount) {
+  if (
+    repaymentType === "installment" &&
+    payAmount > dueAmount &&
+    !(new Date(paymentDate) > new Date(dueDate))
+  ) {
     throw new Error("Payment exceeds the remaining loan amount");
   }
 };
@@ -207,6 +213,8 @@ export const makePayment = async (req, res) => {
     const requiredPayment =
       existingLoan.installmentAmount * Math.ceil(monthsGap);
 
+    const dueDate = existingLoan.dueDate;
+
     // Validate payment amount
     validatePaymentAmount(
       payAmount,
@@ -215,7 +223,9 @@ export const makePayment = async (req, res) => {
       repaymentType,
       installmentAmount,
       dueAmount,
-      monthsGap
+      monthsGap,
+      paymentDate,
+      dueDate
     );
 
     // Check for duplicate payments

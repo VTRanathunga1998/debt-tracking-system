@@ -15,7 +15,8 @@ export const createLoan = async (req, res) => {
     } = req.body;
 
     // Temporary lender ID (Replace with actual authentication logic)
-    const lenderId = "679cc95aa66cef6fe11e850b";
+    // const lenderId = "679cc95aa66cef6fe11e850b";
+    const lenderId = req.lender._id;
 
     // Validate required fields
     if (!nic || !amount || !interestRate || !startDate || !repaymentType) {
