@@ -1,19 +1,58 @@
 "use client";
 import { useState } from 'react';
-import { LockClosedIcon, UserIcon, EnvelopeIcon } from '@heroicons/react/24/outline';
+import { useRouter } from 'next/navigation';
+import { LockClosedIcon, UserIcon, EnvelopeIcon, IdentificationIcon, PhoneIcon, HomeIcon } from '@heroicons/react/24/outline';
+
+interface AuthFormData {
+  nic: string;
+  name: string;
+  email: string;
+  telephone: string;
+  address: string;
+  password: string;
+}
 
 export default function AuthForm() {
+  const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({
+  const [error, setError] = useState<string>('');
+  const [formData, setFormData] = useState<AuthFormData>({
+    nic: '',
     name: '',
     email: '',
+    telephone: '',
+    address: '',
     password: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log(formData);
+    setError('');
+
+    const endpoint = isLogin ? '/api/user/login' : '/api/user/signup';
+
+    try {
+      const response = await fetch(`http://localhost:4000${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.error || 'Authentication failed');
+
+      if (isLogin) {
+        localStorage.setItem('token', data.token);
+        router.push('/dashboard');
+      } else {
+        setIsLogin(true);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to authenticate');
+    }
   };
 
   return (
@@ -31,16 +70,55 @@ export default function AuthForm() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {!isLogin && (
-            <div className="relative">
-              <UserIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Full Name"
-                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-600 focus:outline-none"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
-            </div>
+            <>
+              <div className="relative">
+                <IdentificationIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="NIC Number"
+                  className="w-full pl-10 pr-4 py-3 text-gray-800 rounded-lg border border-gray-300 focus:border-indigo-600 focus:outline-none"
+                  value={formData.nic}
+                  onChange={(e) => setFormData({ ...formData, nic: e.target.value })}
+                  required={!isLogin}
+                />
+              </div>
+
+              <div className="relative">
+                <UserIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Full Name"
+                  className="w-full pl-10 pr-4 py-3 text-gray-800 rounded-lg border border-gray-300 focus:border-indigo-600 focus:outline-none"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required={!isLogin}
+                />
+              </div>
+
+              <div className="relative">
+                <PhoneIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="tel"
+                  placeholder="Telephone Number"
+                  className="w-full pl-10 pr-4 py-3 text-gray-800 rounded-lg border border-gray-300 focus:border-indigo-600 focus:outline-none"
+                  value={formData.telephone}
+                  onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+                  required={!isLogin}
+                />
+              </div>
+
+              <div className="relative">
+                <HomeIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Address"
+                  className="w-full pl-10 pr-4 py-3 text-gray-800 rounded-lg border border-gray-300 focus:border-indigo-600 focus:outline-none"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  required={!isLogin}
+                />
+              </div>
+            </>
           )}
 
           <div className="relative">
@@ -48,7 +126,7 @@ export default function AuthForm() {
             <input
               type="email"
               placeholder="Email Address"
-              className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-600 focus:outline-none"
+              className="w-full pl-10 pr-4 py-3 text-gray-800 rounded-lg border border-gray-300 focus:border-indigo-600 focus:outline-none"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
@@ -60,7 +138,7 @@ export default function AuthForm() {
             <input
               type="password"
               placeholder="Password"
-              className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:border-indigo-600 focus:outline-none"
+              className="w-full pl-10 pr-4 py-3 text-gray-800 rounded-lg border border-gray-300 focus:border-indigo-600 focus:outline-none"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
@@ -74,7 +152,6 @@ export default function AuthForm() {
             {isLogin ? 'Sign In' : 'Create Account'}
           </button>
         </form>
-
         <p className="text-center mt-6 text-gray-600">
           {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
           <button
@@ -84,32 +161,6 @@ export default function AuthForm() {
             {isLogin ? 'Sign Up' : 'Sign In'}
           </button>
         </p>
-
-        <div className="mt-8">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Or continue with</span>
-            </div>
-          </div>
-
-          <div className="mt-6 grid grid-cols-2 gap-3">
-            <button className="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-300">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                {/* Google SVG icon */}
-              </svg>
-              <span className="ml-2 text-gray-700">Google</span>
-            </button>
-            <button className="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-300">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                {/* Facebook SVG icon */}
-              </svg>
-              <span className="ml-2 text-gray-700">Facebook</span>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
