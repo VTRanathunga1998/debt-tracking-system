@@ -1,4 +1,3 @@
-// components/DashboardLayout.tsx
 "use client";
 import { useState } from 'react';
 import {
@@ -14,13 +13,13 @@ import {
 
 const navigation = [
   { name: 'Dashboard', icon: ChartBarIcon, current: true },
-  { name: 'Loans', icon: CurrencyDollarIcon, current: false },
   { name: 'Borrowers', icon: UsersIcon, current: false },
-  { name: 'Reports', icon: DocumentTextIcon, current: false },
+  { name: 'Loans', icon: CurrencyDollarIcon, current: false },
+  { name: 'Payments', icon: DocumentTextIcon, current: false },
   { name: 'Settings', icon: Cog6ToothIcon, current: false },
 ];
 
-export default function DashboardLayout() {
+export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('Dashboard');
 
