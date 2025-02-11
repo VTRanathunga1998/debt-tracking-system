@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState } from "react";
 import {
   ChartBarIcon,
   UsersIcon,
@@ -9,19 +9,19 @@ import {
   ArrowLeftOnRectangleIcon,
   Bars3Icon,
   XMarkIcon,
-} from '@heroicons/react/24/outline';
+} from "@heroicons/react/24/outline";
 
 const navigation = [
-  { name: 'Dashboard', icon: ChartBarIcon, current: true },
-  { name: 'Borrowers', icon: UsersIcon, current: false },
-  { name: 'Loans', icon: CurrencyDollarIcon, current: false },
-  { name: 'Payments', icon: DocumentTextIcon, current: false },
-  { name: 'Settings', icon: Cog6ToothIcon, current: false },
+  { name: "Dashboard", icon: ChartBarIcon, current: true },
+  { name: "Borrowers", icon: UsersIcon, current: false },
+  { name: "Loans", icon: CurrencyDollarIcon, current: false },
+  { name: "Payments", icon: DocumentTextIcon, current: false },
+  { name: "Settings", icon: Cog6ToothIcon, current: false },
 ];
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('Dashboard');
+  const [activeTab, setActiveTab] = useState("Dashboard");
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -40,13 +40,17 @@ export default function Dashboard() {
       {/* Sidebar */}
       <div
         className={`fixed inset-y-0 left-0 z-40 w-64 transform bg-white shadow-xl transition duration-300 ease-in-out 
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+          ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          }`}
       >
         <div className="flex flex-col h-full p-4">
           {/* Logo */}
           <div className="flex items-center mb-8 p-2">
             <CurrencyDollarIcon className="h-8 w-8 text-indigo-600" />
-            <span className="ml-2 text-xl font-bold text-gray-800">DebtTracker</span>
+            <span className="ml-2 text-xl font-bold text-gray-800">
+              DebtTracker
+            </span>
           </div>
 
           {/* Navigation */}
@@ -59,9 +63,11 @@ export default function Dashboard() {
                   setSidebarOpen(false);
                 }}
                 className={`w-full flex items-center p-3 rounded-lg transition-colors
-                  ${activeTab === item.name
-                    ? 'bg-indigo-50 text-indigo-700'
-                    : 'text-gray-600 hover:bg-gray-100'}`}
+                  ${
+                    activeTab === item.name
+                      ? "bg-indigo-50 text-indigo-700"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
               >
                 <item.icon className="h-5 w-5 mr-3" />
                 {item.name}
@@ -136,7 +142,9 @@ export default function Dashboard() {
 
             {/* Chart Section */}
             <div className="md:col-span-2 lg:col-span-2 bg-white p-6 rounded-xl shadow-sm">
-              <h3 className="text-lg text-gray-500 font-semibold mb-4">Loan Overview</h3>
+              <h3 className="text-lg text-gray-500 font-semibold mb-4">
+                Loan Overview
+              </h3>
               <div className="h-64 bg-gray-50 rounded-lg p-4">
                 {/* Chart placeholder */}
                 <div className="flex items-center justify-center h-full text-gray-400">
@@ -147,7 +155,9 @@ export default function Dashboard() {
 
             {/* Recent Activities */}
             <div className="bg-white p-6 rounded-xl shadow-sm">
-              <h3 className="text-lg text-gray-500 font-semibold mb-4">Recent Activities</h3>
+              <h3 className="text-lg text-gray-500 font-semibold mb-4">
+                Recent Activities
+              </h3>
               <ul className="space-y-4">
                 {[1, 2, 3].map((item) => (
                   <li key={item} className="flex items-start">

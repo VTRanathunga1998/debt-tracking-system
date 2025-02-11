@@ -108,12 +108,14 @@ lenderSchema.statics.login = async function (email, password) {
   // Find lender by email
   const lender = await this.findOne({ email });
   if (!lender) {
+    console.log("Incorrect email");
     throw Error("Incorrect email");
   }
 
   // Compare passwords
   const match = await bcrypt.compare(password, lender.password);
   if (!match) {
+    console.log("Incorrect password");
     throw Error("Incorrect password");
   }
 
