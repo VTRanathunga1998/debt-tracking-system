@@ -151,7 +151,7 @@ const deleteLender = async (req, res) => {
   }
 };
 
-export const depositFunds = async (req, res) => {
+const depositFunds = async (req, res) => {
   try {
     const { lenderId, amount } = req.body;
 
@@ -171,7 +171,7 @@ export const depositFunds = async (req, res) => {
   }
 };
 
-export const withdrawFunds = async (req, res) => {
+const withdrawFunds = async (req, res) => {
   try {
     const { lenderId, amount } = req.body;
 
@@ -196,11 +196,14 @@ export const withdrawFunds = async (req, res) => {
   }
 };
 
-export const getAccountStatement = async (req, res) => {
+const getAccountStatement = async (req, res) => {
   try {
-    const lender = await Lender.findById(req.params.id).populate(
-      "transactions.referenceId"
-    );
+    const lender = await Lender.findById(req.params.id)
+      .populate({
+        path: "transactions.referenceId",
+        strictPopulate: false, // Add this if using dynamic references
+      })
+      .exec();
 
     res.status(200).json({
       balance: lender.account.balance,
@@ -209,8 +212,18 @@ export const getAccountStatement = async (req, res) => {
       transactions: lender.transactions,
     });
   } catch (error) {
+    console.error(error.message);
     res.status(400).json({ error: error.message });
   }
 };
 
-export { signupLender, loginLender, getLender, deleteLender, updateLender };
+export {
+  signupLender,
+  loginLender,
+  getLender,
+  deleteLender,
+  updateLender,
+  getAccountStatement,
+  depositFunds,
+  withdrawFunds,
+};

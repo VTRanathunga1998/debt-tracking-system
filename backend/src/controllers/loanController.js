@@ -2,9 +2,13 @@ import moment from "moment";
 import Loan from "../models/Loan.js";
 import Lender from "../models/Lender.js";
 
-// Create a new loan
+import mongoose from "mongoose";
+
 export const createLoan = async (req, res) => {
+  const session = await mongoose.startSession();
   try {
+    session.startTransaction();
+
     const {
       nic,
       amount,
@@ -14,66 +18,62 @@ export const createLoan = async (req, res) => {
       repaymentType,
     } = req.body;
 
-    // Temporary lender ID (Replace with actual authentication logic)
-    // const lenderId = "679cc95aa66cef6fe11e850b";
     const lenderId = req.lender._id;
 
     // Validate required fields
     if (!nic || !amount || !interestRate || !startDate || !repaymentType) {
-      return res.status(400).json({ error: "All fields are required" });
+      throw new Error("All fields are required");
     }
 
-    // Check if an active loan already exists for this NIC
-    const existingLoan = await Loan.findOne({ nic, status: "active" });
+    // Check for existing active loan (within transaction)
+    const existingLoan = await Loan.findOne({ nic, status: "active" }).session(
+      session
+    );
     if (existingLoan) {
-      return res
-        .status(400)
-        .json({ error: "An active loan already exists for this NIC" });
+      throw new Error("An active loan already exists for this NIC");
     }
 
-    // Fetch lender details
-    const lender = await Lender.findById(lenderId);
-    if (!lender) {
-      return res.status(404).json({ error: "Lender not found" });
+    // Atomically update lender's balance and totalLent
+    const updatedLender = await Lender.findOneAndUpdate(
+      {
+        _id: lenderId,
+        "account.balance": { $gte: amount },
+      },
+      {
+        $inc: {
+          "account.balance": -amount,
+          "account.totalLent": amount,
+        },
+      },
+      { new: true, session }
+    );
+
+    if (!updatedLender) {
+      throw new Error("Insufficient funds or lender not found");
     }
 
-    // Check if lender has enough balance
-    if (lender.account.balance < amount) {
-      return res
-        .status(400)
-        .json({ error: "Insufficient funds in lender's account" });
-    }
-
+    // Calculate loan terms
     let totalAmount, installmentAmount, totalInterest, dueDate;
 
     if (repaymentType === "installment") {
       if (!numOfInstallments || numOfInstallments <= 0) {
-        return res.status(400).json({
-          error: "Number of installments required for installment loan",
-        });
+        throw new Error("Number of installments required");
       }
 
       totalInterest = (amount * interestRate * numOfInstallments) / 100;
       totalAmount = amount + totalInterest;
-      installmentAmount = Math.round(totalAmount / numOfInstallments).toFixed(
-        0
-      );
+      installmentAmount = Math.round(totalAmount / numOfInstallments);
       dueDate = moment(startDate).add(numOfInstallments, "months").toDate();
     } else if (repaymentType === "interest-only") {
       totalAmount = amount;
       totalInterest = 0;
-      installmentAmount = Math.round((amount * interestRate) / 100).toFixed(0);
-      dueDate = undefined;
+      installmentAmount = Math.round((amount * interestRate) / 100);
+      dueDate = null;
     } else {
-      return res.status(400).json({ error: "Invalid repayment type" });
+      throw new Error("Invalid repayment type");
     }
 
-    // Deduct loan amount from lender's balance
-    lender.account.balance -= amount;
-    lender.account.totalLent += amount;
-    await lender.save(); // Save updated lender balance
-
-    // Create the loan object
+    // Create and save loan within transaction
     const loan = new Loan({
       nic,
       amount,
@@ -84,17 +84,33 @@ export const createLoan = async (req, res) => {
       dueDate,
       totalAmount,
       installmentAmount,
-      dueAmount: totalAmount, // Initially, dueAmount = totalAmount
+      dueAmount: totalAmount,
       repaymentType,
       lenderId,
     });
 
-    // Save the loan in the database
-    await loan.save();
+    await loan.save({ session });
 
+    // Add transaction for loan issuance
+    const transaction = {
+      type: "loan",
+      referenceId: loan._id,
+      amount: -amount, // Negative because funds are leaving the lender's account
+      date: new Date(),
+      description: `Loan issued to NIC ${nic}`,
+    };
+
+    updatedLender.transactions.push(transaction); // Add transaction to lender's transactions array
+
+    await updatedLender.save({ session }); // Save updated lender with the transaction
+
+    await session.commitTransaction();
     res.status(201).json(loan);
   } catch (error) {
+    await session.abortTransaction();
     res.status(400).json({ error: error.message });
+  } finally {
+    session.endSession();
   }
 };
 

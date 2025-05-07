@@ -5,6 +5,7 @@ import {
   getLender,
   deleteLender,
   updateLender,
+  getAccountStatement,
 } from "../controllers/lenderController.js";
 import requireAuth from "../middleware/requireAuth.js";
 
@@ -24,5 +25,8 @@ router.delete("/:id", requireAuth, deleteLender);
 
 // UPDATE LENDER
 router.put("/:id", requireAuth, updateLender);
+
+//Get Account Statements
+router.get("/account-statements/:id", requireAuth, getAccountStatement);
 
 export default router;

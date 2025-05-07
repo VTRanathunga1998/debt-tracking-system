@@ -12,9 +12,31 @@ const lenderSchema = new mongoose.Schema(
     password: { type: String, required: true },
     account: {
       balance: { type: Number, default: 0 },
-      totalLent: { type: Number, default: 0 },
+      totalLent: { type: Number, default: 0 }, // Use this instead of totalIssued
       interestEarned: { type: Number, default: 0 },
     },
+    transactions: [
+      {
+        type: {
+          type: String,
+          enum: ["loan", "payment", "interest"], // Example transaction types
+          required: true,
+        },
+        referenceId: {
+          type: mongoose.Schema.Types.ObjectId,
+          refPath: "transactions.type", // Dynamic reference
+          required: true,
+        },
+        amount: {
+          type: Number,
+          required: true,
+        },
+        date: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   {
     timestamps: true,
