@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   ChartBarIcon,
   UsersIcon,
@@ -10,6 +11,7 @@ import {
   Bars3Icon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import { useAuth } from "@/context/AuthContext"; // Import the AuthContext
 
 const navigation = [
   { name: "Dashboard", icon: ChartBarIcon, current: true },
@@ -22,6 +24,83 @@ const navigation = [
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Dashboard");
+
+  // Access lender details from AuthContext
+  const { lender } = useAuth();
+
+  if (!lender) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-700">Please log in to view the dashboard.</p>
+      </div>
+    );
+  }
+
+  const [loading, setLoading] = useState(true);
+  const [lenderDetails, setLenderDetails] = useState<{
+    balance: number;
+    totalLent: number;
+    interestEarned: number;
+    activeBorrowers: number; // Add this field
+  } | null>(null);
+
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchAccountStatement = async () => {
+      try {
+        const lenderId = lender._id;
+        if (!lenderId) {
+          setLoading(false);
+          return;
+        }
+  
+        const response = await fetch(
+          `http://localhost:4000/api/user/account-statements/${lenderId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+  
+        if (!response.ok) {
+          throw new Error("Failed to fetch account statement");
+        }
+  
+        const data = await response.json();
+        setLenderDetails({
+          balance: data.balance,
+          totalLent: data.totalLent,
+          interestEarned: data.interestEarned,
+          activeBorrowers: data.activeBorrowers, // Include active borrowers
+        });
+      } catch (error) {
+        console.error("Error fetching account statement:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchAccountStatement();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-700">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!lenderDetails) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-700">Please log in to view the dashboard.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -84,8 +163,11 @@ export default function Dashboard() {
                 className="h-8 w-8 rounded-full"
               />
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700">John Doe</p>
-                <p className="text-xs text-gray-500">Admin</p>
+                <p className="text-sm font-medium text-gray-700">
+                  {lender.name}
+                </p>{" "}
+                {/* Lender's Name */}
+                <p className="text-xs text-gray-500">Lender</p>
               </div>
               <ArrowLeftOnRectangleIcon className="h-5 w-5 ml-auto text-gray-400" />
             </div>
@@ -102,8 +184,24 @@ export default function Dashboard() {
           </div>
 
           {/* Dashboard Content Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Account Balance Card */}
+            <div className="bg-white p-6 rounded-xl shadow-sm">
+              <div className="flex items-center">
+                <div className="p-3 bg-yellow-100 rounded-lg">
+                  <CurrencyDollarIcon className="h-6 w-6 text-yellow-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm text-gray-500">Account Balance</p>
+                  <p className="text-2xl text-black font-bold">
+                    ${lenderDetails.balance.toLocaleString()}{" "}
+                    {/* Account Balance */}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Total Loans Card */}
             <div className="bg-white p-6 rounded-xl shadow-sm">
               <div className="flex items-center">
                 <div className="p-3 bg-green-100 rounded-lg">
@@ -111,11 +209,15 @@ export default function Dashboard() {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm text-gray-500">Total Loans</p>
-                  <p className="text-2xl text-black font-bold">$245,854</p>
+                  <p className="text-2xl text-black font-bold">
+                    ${lenderDetails.totalLent.toLocaleString()}{" "}
+                    {/* Total Lent */}
+                  </p>
                 </div>
               </div>
             </div>
 
+            {/* Active Borrowers Card */}
             <div className="bg-white p-6 rounded-xl shadow-sm">
               <div className="flex items-center">
                 <div className="p-3 bg-blue-100 rounded-lg">
@@ -123,11 +225,14 @@ export default function Dashboard() {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm text-gray-500">Active Borrowers</p>
-                  <p className="text-2xl text-black font-bold">24</p>
+                  <p className="text-2xl text-black font-bold">
+                    {lenderDetails.activeBorrowers}
+                  </p>
                 </div>
               </div>
             </div>
 
+            {/* Overdue Payments Card */}
             <div className="bg-white p-6 rounded-xl shadow-sm">
               <div className="flex items-center">
                 <div className="p-3 bg-red-100 rounded-lg">
@@ -141,7 +246,7 @@ export default function Dashboard() {
             </div>
 
             {/* Chart Section */}
-            <div className="md:col-span-2 lg:col-span-2 bg-white p-6 rounded-xl shadow-sm">
+            <div className="md:col-span-3 lg:col-span-3 bg-white p-6 rounded-xl shadow-sm">
               <h3 className="text-lg text-gray-500 font-semibold mb-4">
                 Loan Overview
               </h3>
@@ -154,7 +259,7 @@ export default function Dashboard() {
             </div>
 
             {/* Recent Activities */}
-            <div className="bg-white p-6 rounded-xl shadow-sm">
+            <div className=" bg-white p-6 rounded-xl shadow-sm">
               <h3 className="text-lg text-gray-500 font-semibold mb-4">
                 Recent Activities
               </h3>

@@ -28,9 +28,7 @@ export default function AuthForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
     const endpoint = isLogin ? '/api/user/login' : '/api/user/signup';
-
     try {
       const response = await fetch(`http://localhost:4000${endpoint}`, {
         method: 'POST',
@@ -39,13 +37,15 @@ export default function AuthForm() {
         },
         body: JSON.stringify(formData),
       });
-
       const data = await response.json();
-
       if (!response.ok) throw new Error(data.error || 'Authentication failed');
-
+  
       if (isLogin) {
+        // Save token and lender details to local storage
         localStorage.setItem('token', data.token);
+        localStorage.setItem('lender', JSON.stringify(data.lender));
+  
+        // Redirect to dashboard
         router.push('/dashboard');
       } else {
         setIsLogin(true);

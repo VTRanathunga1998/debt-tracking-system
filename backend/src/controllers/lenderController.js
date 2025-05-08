@@ -2,6 +2,7 @@ import Lender from "../models/Lender.js";
 import jwt from "jsonwebtoken";
 import validator from "validator";
 import mongoose from "mongoose";
+import Loan from "../models/Loan.js";
 
 // CREATE TOKEN
 const createToken = (_id, nic) => {
@@ -13,17 +14,22 @@ const createToken = (_id, nic) => {
 // LOGIN lender
 const loginLender = async (req, res) => {
   const { email, password } = req.body;
-
   try {
     const lender = await Lender.login(email, password);
 
     // Create token
     const token = createToken(lender._id, lender.nic);
 
+    // Include lender details in the response
     res.status(200).json({
       email,
       token,
-      lenderid: lender._id,
+      lender: {
+        _id: lender._id,
+        nic: lender.nic,
+        name: lender.name,
+        email: lender.email,
+      },
     });
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -205,10 +211,21 @@ const getAccountStatement = async (req, res) => {
       })
       .exec();
 
+    if (!lender) {
+      return res.status(404).json({ error: "Lender not found" });
+    }
+
+    // Count active borrowers (loans with status "active")
+    const activeBorrowers = await Loan.countDocuments({
+      lenderId: lender._id,
+      status: "active",
+    });
+
     res.status(200).json({
       balance: lender.account.balance,
       totalLent: lender.account.totalLent,
       interestEarned: lender.account.interestEarned,
+      activeBorrowers, // Include active borrowers count
       transactions: lender.transactions,
     });
   } catch (error) {
