@@ -1,7 +1,14 @@
 "use client";
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { LockClosedIcon, UserIcon, EnvelopeIcon, IdentificationIcon, PhoneIcon, HomeIcon } from '@heroicons/react/24/outline';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  LockClosedIcon,
+  UserIcon,
+  EnvelopeIcon,
+  IdentificationIcon,
+  PhoneIcon,
+  HomeIcon,
+} from "@heroicons/react/24/outline";
 
 interface AuthFormData {
   nic: string;
@@ -15,43 +22,43 @@ interface AuthFormData {
 export default function AuthForm() {
   const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
   const [formData, setFormData] = useState<AuthFormData>({
-    nic: '',
-    name: '',
-    email: '',
-    telephone: '',
-    address: '',
-    password: ''
+    nic: "",
+    name: "",
+    email: "",
+    telephone: "",
+    address: "",
+    password: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    const endpoint = isLogin ? '/api/user/login' : '/api/user/signup';
+    setError("");
+    const endpoint = isLogin ? "/api/user/login" : "/api/user/signup";
     try {
       const response = await fetch(`http://localhost:4000${endpoint}`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Authentication failed');
-  
+      if (!response.ok) throw new Error(data.error || "Authentication failed");
+
       if (isLogin) {
         // Save token and lender details to local storage
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('lender', JSON.stringify(data.lender));
-  
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("lender", JSON.stringify(data.lender));
+
         // Redirect to dashboard
-        router.push('/dashboard');
+        router.push("/dashboard");
       } else {
         setIsLogin(true);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to authenticate');
+      setError(err instanceof Error ? err.message : "Failed to authenticate");
     }
   };
 
@@ -65,7 +72,7 @@ export default function AuthForm() {
         </div>
 
         <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">
-          {isLogin ? 'Welcome Back!' : 'Get Started'}
+          {isLogin ? "Welcome Back!" : "Get Started"}
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -78,7 +85,9 @@ export default function AuthForm() {
                   placeholder="NIC Number"
                   className="w-full pl-10 pr-4 py-3 text-gray-800 rounded-lg border border-gray-300 focus:border-indigo-600 focus:outline-none"
                   value={formData.nic}
-                  onChange={(e) => setFormData({ ...formData, nic: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, nic: e.target.value })
+                  }
                   required={!isLogin}
                 />
               </div>
@@ -90,7 +99,9 @@ export default function AuthForm() {
                   placeholder="Full Name"
                   className="w-full pl-10 pr-4 py-3 text-gray-800 rounded-lg border border-gray-300 focus:border-indigo-600 focus:outline-none"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   required={!isLogin}
                 />
               </div>
@@ -102,7 +113,9 @@ export default function AuthForm() {
                   placeholder="Telephone Number"
                   className="w-full pl-10 pr-4 py-3 text-gray-800 rounded-lg border border-gray-300 focus:border-indigo-600 focus:outline-none"
                   value={formData.telephone}
-                  onChange={(e) => setFormData({ ...formData, telephone: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, telephone: e.target.value })
+                  }
                   required={!isLogin}
                 />
               </div>
@@ -114,7 +127,9 @@ export default function AuthForm() {
                   placeholder="Address"
                   className="w-full pl-10 pr-4 py-3 text-gray-800 rounded-lg border border-gray-300 focus:border-indigo-600 focus:outline-none"
                   value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, address: e.target.value })
+                  }
                   required={!isLogin}
                 />
               </div>
@@ -128,7 +143,9 @@ export default function AuthForm() {
               placeholder="Email Address"
               className="w-full pl-10 pr-4 py-3 text-gray-800 rounded-lg border border-gray-300 focus:border-indigo-600 focus:outline-none"
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
               required
             />
           </div>
@@ -140,7 +157,9 @@ export default function AuthForm() {
               placeholder="Password"
               className="w-full pl-10 pr-4 py-3 text-gray-800 rounded-lg border border-gray-300 focus:border-indigo-600 focus:outline-none"
               value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
               required
             />
           </div>
@@ -149,16 +168,16 @@ export default function AuthForm() {
             type="submit"
             className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors duration-300"
           >
-            {isLogin ? 'Sign In' : 'Create Account'}
+            {isLogin ? "Sign In" : "Create Account"}
           </button>
         </form>
         <p className="text-center mt-6 text-gray-600">
-          {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
+          {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
           <button
             onClick={() => setIsLogin(!isLogin)}
             className="text-indigo-600 font-semibold hover:underline focus:outline-none"
           >
-            {isLogin ? 'Sign Up' : 'Sign In'}
+            {isLogin ? "Sign Up" : "Sign In"}
           </button>
         </p>
       </div>

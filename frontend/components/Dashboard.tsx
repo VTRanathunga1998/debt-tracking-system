@@ -25,23 +25,15 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Dashboard");
 
-  // Access lender details from AuthContext
-  const { lender } = useAuth();
-
-  if (!lender) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-700">Please log in to view the dashboard.</p>
-      </div>
-    );
-  }
+  // Access lender details and logout function from AuthContext
+  const { lender, logout } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [lenderDetails, setLenderDetails] = useState<{
     balance: number;
     totalLent: number;
     interestEarned: number;
-    activeBorrowers: number; // Add this field
+    activeBorrowers: number;
   } | null>(null);
 
   const router = useRouter();
@@ -49,12 +41,12 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchAccountStatement = async () => {
       try {
-        const lenderId = lender._id;
+        const lenderId = lender?._id; // Use optional chaining to avoid errors
         if (!lenderId) {
           setLoading(false);
           return;
         }
-  
+
         const response = await fetch(
           `http://localhost:4000/api/user/account-statements/${lenderId}`,
           {
@@ -64,17 +56,17 @@ export default function Dashboard() {
             },
           }
         );
-  
+
         if (!response.ok) {
           throw new Error("Failed to fetch account statement");
         }
-  
+
         const data = await response.json();
         setLenderDetails({
           balance: data.balance,
           totalLent: data.totalLent,
           interestEarned: data.interestEarned,
-          activeBorrowers: data.activeBorrowers, // Include active borrowers
+          activeBorrowers: data.activeBorrowers,
         });
       } catch (error) {
         console.error("Error fetching account statement:", error);
@@ -82,22 +74,23 @@ export default function Dashboard() {
         setLoading(false);
       }
     };
-  
+
     fetchAccountStatement();
-  }, []);
+  }, [lender]); // Add lender as a dependency to re-fetch data if lender changes
+
+  // Early return for loading or missing lender
+  if (!lender) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-700">Loading......</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <p className="text-gray-700">Loading...</p>
-      </div>
-    );
-  }
-
-  if (!lenderDetails) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-700">Please log in to view the dashboard.</p>
       </div>
     );
   }
@@ -156,7 +149,10 @@ export default function Dashboard() {
 
           {/* Profile & Logout */}
           <div className="border-t pt-4">
-            <div className="flex items-center p-2 hover:bg-gray-100 rounded-lg cursor-pointer">
+            <div
+              className="flex items-center p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
+              onClick={logout} // Attach the logout function
+            >
               <img
                 src="https://via.placeholder.com/40"
                 alt="Profile"
@@ -165,7 +161,7 @@ export default function Dashboard() {
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-700">
                   {lender.name}
-                </p>{" "}
+                </p>
                 {/* Lender's Name */}
                 <p className="text-xs text-gray-500">Lender</p>
               </div>
@@ -194,7 +190,7 @@ export default function Dashboard() {
                 <div className="ml-4">
                   <p className="text-sm text-gray-500">Account Balance</p>
                   <p className="text-2xl text-black font-bold">
-                    ${lenderDetails.balance.toLocaleString()}{" "}
+                    ${lenderDetails?.balance?.toLocaleString() || 0}{" "}
                     {/* Account Balance */}
                   </p>
                 </div>
@@ -210,7 +206,7 @@ export default function Dashboard() {
                 <div className="ml-4">
                   <p className="text-sm text-gray-500">Total Loans</p>
                   <p className="text-2xl text-black font-bold">
-                    ${lenderDetails.totalLent.toLocaleString()}{" "}
+                    ${lenderDetails?.totalLent?.toLocaleString() || 0}{" "}
                     {/* Total Lent */}
                   </p>
                 </div>
@@ -226,7 +222,7 @@ export default function Dashboard() {
                 <div className="ml-4">
                   <p className="text-sm text-gray-500">Active Borrowers</p>
                   <p className="text-2xl text-black font-bold">
-                    {lenderDetails.activeBorrowers}
+                    {lenderDetails?.activeBorrowers || 0}
                   </p>
                 </div>
               </div>
@@ -259,7 +255,7 @@ export default function Dashboard() {
             </div>
 
             {/* Recent Activities */}
-            <div className=" bg-white p-6 rounded-xl shadow-sm">
+            <div className="bg-white p-6 rounded-xl shadow-sm">
               <h3 className="text-lg text-gray-500 font-semibold mb-4">
                 Recent Activities
               </h3>

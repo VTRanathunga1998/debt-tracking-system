@@ -27,18 +27,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    // Retrieve token and lender details from local storage
     const storedToken = localStorage.getItem("token");
     const storedLender = localStorage.getItem("lender");
 
-    if (storedToken) {
+    if (storedToken && storedLender) {
       setToken(storedToken);
-    }
-    if (storedLender) {
-      setLender(JSON.parse(storedLender)); // Parse lender JSON
+      setLender(JSON.parse(storedLender));
     }
 
-    setIsLoading(false); // Stop loading after checking storage
+    setIsLoading(false);
   }, []);
 
   const login = (newToken: string, newLender: Lender) => {
@@ -51,7 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLender(newLender);
 
     // Redirect to dashboard
-    router.push("/dashboard");
+    router.push("");
   };
 
   const logout = () => {
