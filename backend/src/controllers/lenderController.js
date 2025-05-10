@@ -218,7 +218,12 @@ const getAccountStatement = async (req, res) => {
     // Count active borrowers (loans with status "active")
     const activeBorrowers = await Loan.countDocuments({
       lenderId: lender._id,
-      status: "active",
+      status: { $in: ["active", "overdue"] },
+    });
+
+    const overdueBorrowers = await Loan.countDocuments({
+      lenderId: lender._id,
+      status: "overdue",
     });
 
     // Get the latest 3 transactions
@@ -231,6 +236,7 @@ const getAccountStatement = async (req, res) => {
       totalLent: lender.account.totalLent,
       interestEarned: lender.account.interestEarned,
       activeBorrowers, // Include active borrowers count
+      overdueBorrowers,
       recentTransactions, // Add recent transactions to the response
     });
   } catch (error) {

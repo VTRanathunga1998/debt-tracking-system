@@ -25,10 +25,30 @@ export const createLoan = async (req, res) => {
       throw new Error("All fields are required");
     }
 
+    // Parse startDate into a moment object
+    const parsedStartDate = moment(startDate, "YYYY-MM-DD");
+
+    // Validate that startDate is within one month before today and not in the future
+    const today = moment().startOf("day"); // Start of today
+    const oneMonthAgo = moment().subtract(1, "month").startOf("day"); // One month ago
+
+    if (!parsedStartDate.isValid()) {
+      throw new Error("Invalid start date format");
+    }
+
+    if (parsedStartDate.isBefore(oneMonthAgo)) {
+      throw new Error("Start date cannot be older than one month from today");
+    }
+
+    if (parsedStartDate.isAfter(today)) {
+      throw new Error("Start date cannot be in the future");
+    }
+
     // Check for existing active loan (within transaction)
     const existingLoan = await Loan.findOne({ nic, status: "active" }).session(
       session
     );
+
     if (existingLoan) {
       throw new Error("An active loan already exists for this NIC");
     }

@@ -12,7 +12,11 @@ const validateRequiredFields = (nic, payAmount, date) => {
 
 // Helper function to find an active loan for the given NIC
 const findActiveLoan = async (nic) => {
-  const loan = await Loan.findOne({ nic, status: "active" });
+  const loan = await Loan.findOne({
+    nic,
+    status: { $in: ["active", "overdue"] },
+  });
+
   if (!loan) {
     throw new Error("No active loan found for this NIC");
   }
@@ -182,8 +186,7 @@ export const makePayment = async (req, res) => {
     validateRequiredFields(nic, payAmount, date);
 
     // Parse the date in the correct format
-    const paymentDate = moment(date, "YYYY-M-D").startOf("month");
-
+    const paymentDate = moment(date, "YYYY-M-D");
     // Find an active loan for the given NIC
     const existingLoan = await findActiveLoan(nic);
 
@@ -207,7 +210,7 @@ export const makePayment = async (req, res) => {
     );
 
     // Calculate the number of months since the last payment
-    const monthsGap = paymentDate.diff(lastPaymentDate, "months") + 1;
+    const monthsGap = paymentDate.diff(lastPaymentDate, "months");
 
     // Calculate the required payment to cover overdue installments
     const requiredPayment =
@@ -254,6 +257,25 @@ export const makePayment = async (req, res) => {
     });
 
     await payment.save();
+
+    // Update lender's transactions
+    const lender = await Lender.findById(existingLoan.lenderId);
+    if (lender) {
+      lender.transactions.push({
+        type: "payment", // Transaction type
+        referenceId: payment._id, // Reference to the payment document
+        amount: payAmount, // Amount of the payment
+        date: new Date(date), // Date of the payment
+      });
+
+      await lender.save(); // Save the updated lender document
+    }
+
+    // Reset the overdue notification flag if applicable
+    if (remainingAmount <= 0 || updatedStatus !== "overdue") {
+      existingLoan.overdueNotificationSent = false; // Reset the flag
+      await existingLoan.save();
+    }
 
     res.status(201).json({
       message: "Payment successful",

@@ -34,21 +34,21 @@ export default function Dashboard() {
     totalLent: number;
     interestEarned: number;
     activeBorrowers: number;
+    overdueBorrowers: number;
     recentTransactions: Array<{
       type: string;
       amount: number;
       date: Date;
-      referenceId: { _id: string };
+      referenceId: string;
     }>;
   }>({
     balance: 0,
     totalLent: 0,
     interestEarned: 0,
     activeBorrowers: 0,
+    overdueBorrowers: 0,
     recentTransactions: [],
   });
-
-  const router = useRouter();
 
   useEffect(() => {
     const fetchAccountStatement = async () => {
@@ -79,6 +79,7 @@ export default function Dashboard() {
           totalLent: data.totalLent,
           interestEarned: data.interestEarned,
           activeBorrowers: data.activeBorrowers,
+          overdueBorrowers: data.overdueBorrowers,
           recentTransactions: data.recentTransactions,
         });
       } catch (error) {
@@ -107,6 +108,8 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  console.log("Lender Details:", lenderDetails); // Debugging line
 
   // Helper function to get a human-readable activity label
   const getActivityLabel = (type: string): string => {
@@ -275,7 +278,9 @@ export default function Dashboard() {
                 </div>
                 <div className="ml-4">
                   <p className="text-sm text-gray-500">Overdue Payments</p>
-                  <p className="text-2xl text-black font-bold">15</p>
+                  <p className="text-2xl text-black font-bold">
+                    {lenderDetails?.overdueBorrowers || 0}
+                  </p>
                 </div>
               </div>
             </div>
@@ -319,12 +324,9 @@ export default function Dashboard() {
                             {getActivityLabel(transaction.type)}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {transaction.referenceId?._id
-                              ? `${transaction.referenceId._id} - $${Math.abs(
-                                  transaction.amount
-                                ).toLocaleString()}`
-                              : "Unknown Reference"}
+                            {transaction.referenceId || "No Reference"}
                           </p>
+
                           <p className="text-xs text-gray-400">
                             {formatDate(transaction.date)}
                           </p>

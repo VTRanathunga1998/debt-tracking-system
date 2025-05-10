@@ -43,6 +43,7 @@ const loanSchema = new mongoose.Schema({
     enum: ["active", "paid", "overdue"],
     default: "active",
   },
+  overdueNotificationSent: { type: Boolean, default: false },
   lenderId: { type: mongoose.Schema.Types.ObjectId, ref: "Lender" },
 });
 
