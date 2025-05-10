@@ -5,8 +5,8 @@ import mongoose from "mongoose";
 import Loan from "../models/Loan.js";
 
 // CREATE TOKEN
-const createToken = (_id, nic) => {
-  return jwt.sign({ _id, nic }, process.env.SECRET_KEY, {
+const createToken = (_id, nic, email, name) => {
+  return jwt.sign({ _id, nic, email, name }, process.env.SECRET_KEY, {
     expiresIn: "3d",
   });
 };
@@ -18,7 +18,12 @@ const loginLender = async (req, res) => {
     const lender = await Lender.login(email, password);
 
     // Create token
-    const token = createToken(lender._id, lender.nic);
+    const token = createToken(
+      lender._id,
+      lender.nic,
+      lender.email,
+      lender.name
+    );
 
     // Include lender details in the response
     res.status(200).json({
@@ -204,12 +209,7 @@ const withdrawFunds = async (req, res) => {
 
 const getAccountStatement = async (req, res) => {
   try {
-    const lender = await Lender.findById(req.params.id)
-      .populate({
-        path: "transactions.referenceId",
-        strictPopulate: false, // Add this if using dynamic references
-      })
-      .exec();
+    const lender = await Lender.findById(req.params.id);
 
     if (!lender) {
       return res.status(404).json({ error: "Lender not found" });
@@ -221,12 +221,17 @@ const getAccountStatement = async (req, res) => {
       status: "active",
     });
 
+    // Get the latest 3 transactions
+    const recentTransactions = lender.transactions
+      .sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort by date (newest first)
+      .slice(0, 3); // Take the first 3
+
     res.status(200).json({
       balance: lender.account.balance,
       totalLent: lender.account.totalLent,
       interestEarned: lender.account.interestEarned,
       activeBorrowers, // Include active borrowers count
-      transactions: lender.transactions,
+      recentTransactions, // Add recent transactions to the response
     });
   } catch (error) {
     console.error(error.message);

@@ -34,7 +34,19 @@ export default function Dashboard() {
     totalLent: number;
     interestEarned: number;
     activeBorrowers: number;
-  } | null>(null);
+    recentTransactions: Array<{
+      type: string;
+      amount: number;
+      date: Date;
+      referenceId: { _id: string };
+    }>;
+  }>({
+    balance: 0,
+    totalLent: 0,
+    interestEarned: 0,
+    activeBorrowers: 0,
+    recentTransactions: [],
+  });
 
   const router = useRouter();
 
@@ -67,6 +79,7 @@ export default function Dashboard() {
           totalLent: data.totalLent,
           interestEarned: data.interestEarned,
           activeBorrowers: data.activeBorrowers,
+          recentTransactions: data.recentTransactions,
         });
       } catch (error) {
         console.error("Error fetching account statement:", error);
@@ -94,6 +107,32 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  // Helper function to get a human-readable activity label
+  const getActivityLabel = (type: string): string => {
+    switch (type) {
+      case "loan":
+        return "Loan Issued";
+      case "payment":
+        return "Payment Received";
+      case "interest":
+        return "Interest Earned";
+      default:
+        return "Unknown Activity";
+    }
+  };
+
+  // Helper function to format the date
+  const formatDate = (date: Date): string => {
+    const formattedDate = new Date(date).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+    });
+    return formattedDate;
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -259,20 +298,44 @@ export default function Dashboard() {
               <h3 className="text-lg text-gray-500 font-semibold mb-4">
                 Recent Activities
               </h3>
-              <ul className="space-y-4">
-                {[1, 2, 3].map((item) => (
-                  <li key={item} className="flex items-start">
-                    <div className="flex-shrink-0 mt-1">
-                      <div className="h-2 w-2 bg-indigo-600 rounded-full"></div>
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium">Payment Received</p>
-                      <p className="text-xs text-gray-500">Loan #45 - $1,500</p>
-                      <p className="text-xs text-gray-400">2 hours ago</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              {lenderDetails?.recentTransactions?.length > 0 ? (
+                <ul className="space-y-4">
+                  {lenderDetails.recentTransactions.map(
+                    (transaction, index) => (
+                      <li key={index} className="flex items-start">
+                        <div className="flex-shrink-0 mt-1">
+                          <div
+                            className={`h-2 w-2 rounded-full ${
+                              transaction.type === "loan"
+                                ? "bg-green-600"
+                                : transaction.type === "payment"
+                                ? "bg-indigo-600"
+                                : "bg-yellow-600"
+                            }`}
+                          ></div>
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm font-medium">
+                            {getActivityLabel(transaction.type)}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {transaction.referenceId?._id
+                              ? `${transaction.referenceId._id} - $${Math.abs(
+                                  transaction.amount
+                                ).toLocaleString()}`
+                              : "Unknown Reference"}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {formatDate(transaction.date)}
+                          </p>
+                        </div>
+                      </li>
+                    )
+                  )}
+                </ul>
+              ) : (
+                <p className="text-gray-500">No recent activities.</p>
+              )}
             </div>
           </div>
         </div>
