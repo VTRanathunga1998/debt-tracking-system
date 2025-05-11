@@ -85,13 +85,13 @@ const validatePaymentAmount = (
     throw new Error("Amount should be a multiple of installment amount");
   }
 
-  if (
-    repaymentType === "installment" &&
-    payAmount > dueAmount &&
-    !(new Date(paymentDate) > new Date(dueDate))
-  ) {
-    throw new Error("Payment exceeds the remaining loan amount");
-  }
+  // if (
+  //   repaymentType === "installment" &&
+  //   payAmount > dueAmount &&
+  //   !(new Date(paymentDate) > new Date(dueDate))
+  // ) {
+  //   throw new Error("Payment exceeds the remaining loan amount");
+  // }
 };
 
 // Helper function to check for duplicate payments
@@ -150,7 +150,7 @@ const updateLoanDetails = async (
   await Loan.findByIdAndUpdate(loan._id, {
     dueAmount: remainingAmount,
     status: updatedStatus,
-    numOfInstallments: updatedNumOfInstallments,
+    // numOfInstallments: updatedNumOfInstallments,
     nextInstallmentDate: nextInstallmentDate,
   });
 
@@ -262,13 +262,13 @@ export const makePayment = async (req, res) => {
     const lender = await Lender.findById(existingLoan.lenderId);
     if (lender) {
       lender.transactions.push({
-        type: "payment", // Transaction type
-        referenceId: payment._id, // Reference to the payment document
-        amount: payAmount, // Amount of the payment
-        date: new Date(date), // Date of the payment
+        type: "payment",
+        referenceId: payment._id,
+        amount: payAmount,
+        date: new Date(date),
       });
 
-      await lender.save(); // Save the updated lender document
+      await lender.save();
     }
 
     // Reset the overdue notification flag if applicable

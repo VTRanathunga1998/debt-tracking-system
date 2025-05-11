@@ -8,9 +8,10 @@ import lenderRoutes from "./routes/lender.js";
 import loanRoutes from "./routes/loan.js";
 import paymentRoutes from "./routes/payment.js";
 import reportRoutes from "./routes/report.js";
+import borrowerRoutes from "./routes/borrower.js";
 
 import Loan from "./models/Loan.js";
-import Lender from "./models/Lender.js";
+import Borrower from "./models/Borrower.js";
 import { sendEmail } from "./utils/email.js";
 
 // Load environment variables
@@ -44,19 +45,19 @@ const checkOverduePayments = async () => {
       loan.overdueNotificationSent = true;
       await loan.save();
 
-      const lender = await Lender.findById(loan.lenderId);
-      if (lender) {
-        const subject = "Overdue Loan Payment Alert";
-        const message = `Dear Lender,\n\nThe loan with NIC ${
-          loan.nic
-        } is overdue.\n\nDetails:\n- Amount: $${
+      const borrower = await Borrower.findOne({ nic: loan.nic });
+      if (borrower) {
+        const subject = "Loan Payment Overdue Notification";
+        const message = `Dear ${
+          borrower.name
+        },\n\nYour loan is overdue.\n\nLoan Details:\n- Amount: $${
           loan.amount
-        }\n- Due: ${loan.nextInstallmentDate.toDateString()}\n\nRegards,\nDebtTracker`;
+        }\n- Due Date: ${loan.nextInstallmentDate.toDateString()}\n\nPlease make the payment as soon as possible.\n\nRegards,\nDebtTracker`;
 
         await sendEmail(
           "DebtTracker",
           process.env.MAIL_USER,
-          lender.email,
+          borrower.email, // Email to borrower
           subject,
           message,
           null
@@ -80,22 +81,22 @@ const checkOverduePaymentsWeekly = async () => {
     console.log(`Weekly overdue loans: ${loans.length}`);
 
     for (const loan of loans) {
-      loan.overdueNotificationSent = true;
+      loan.overdueNotificationSent = true; // optional if you want to mark reminder sent
       await loan.save();
 
-      const lender = await Lender.findById(loan.lenderId);
-      if (lender) {
-        const subject = "Overdue Loan Reminder";
-        const message = `Dear Lender,\n\nReminder: Loan with NIC ${
-          loan.nic
-        } is still overdue.\n\nDetails:\n- Amount: $${
+      const borrower = await Borrower.findOne({ nic: loan.nic });
+      if (borrower) {
+        const subject = "Weekly Loan Payment Reminder";
+        const message = `Dear ${
+          borrower.name
+        },\n\nThis is a reminder that your loan is still overdue.\n\nLoan Details:\n- Amount: $${
           loan.amount
-        }\n- Due: ${loan.nextInstallmentDate.toDateString()}\n\nRegards,\nDebtTracker`;
+        }\n- Due Date: ${loan.nextInstallmentDate.toDateString()}\n\nPlease make the payment as soon as possible.\n\nRegards,\nDebtTracker`;
 
         await sendEmail(
           "DebtTracker",
           process.env.MAIL_USER,
-          lender.email,
+          borrower.email,
           subject,
           message,
           null
@@ -103,7 +104,7 @@ const checkOverduePaymentsWeekly = async () => {
       }
     }
 
-    console.log(`Weekly notifications sent: ${loans.length}`);
+    console.log(`Weekly borrower reminders sent: ${loans.length}`);
   } catch (error) {
     console.error("Error in weekly overdue check:", error.message);
   }
@@ -127,6 +128,7 @@ app.use("/api/user", lenderRoutes);
 app.use("/api/loans", loanRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/report", reportRoutes);
+app.use("/api/borrower", borrowerRoutes);
 
 // Error handler
 app.use((err, req, res, next) => {

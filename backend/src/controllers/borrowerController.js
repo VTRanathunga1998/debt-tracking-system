@@ -1,20 +1,4 @@
-import Borrower from "../models/Borrower";
-
-export const getBorrowerReport = async (req, res) => {
-  try {
-    const borrower = await Borrower.findOne({ nic: req.params.nic }).populate(
-      "activeLoans"
-    );
-
-    res.status(200).json({
-      creditScore: borrower.creditScore,
-      activeLoans: borrower.activeLoans,
-      repaymentHistory: borrower.repaymentHistory,
-    });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
+import Borrower from "../models/Borrower.js";
 
 // Create a new borrower
 export const createBorrower = async (req, res) => {
@@ -51,17 +35,30 @@ export const getBorrowerById = async (req, res) => {
   }
 };
 
-// Update borrower details
+// Get borrower by NIC
+export const getBorrowerByNIC = async (req, res) => {
+  try {
+    const borrower = await Borrower.findOne({ nic: req.params.nic }).populate(
+      "activeLoans"
+    );
+    if (!borrower)
+      return res.status(404).json({ message: "Borrower not found" });
+    res.status(200).json(borrower);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Update borrower
 export const updateBorrower = async (req, res) => {
   try {
-    const updatedBorrower = await Borrower.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
-    if (!updatedBorrower)
+    const updated = await Borrower.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+    if (!updated)
       return res.status(404).json({ message: "Borrower not found" });
-    res.status(200).json(updatedBorrower);
+    res.status(200).json(updated);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -70,8 +67,8 @@ export const updateBorrower = async (req, res) => {
 // Delete borrower
 export const deleteBorrower = async (req, res) => {
   try {
-    const deletedBorrower = await Borrower.findByIdAndDelete(req.params.id);
-    if (!deletedBorrower)
+    const deleted = await Borrower.findByIdAndDelete(req.params.id);
+    if (!deleted)
       return res.status(404).json({ message: "Borrower not found" });
     res.status(200).json({ message: "Borrower deleted successfully" });
   } catch (error) {
@@ -79,7 +76,7 @@ export const deleteBorrower = async (req, res) => {
   }
 };
 
-// Add repayment history
+// Add repayment record
 export const addRepayment = async (req, res) => {
   try {
     const { loanId, amount, date } = req.body;
@@ -88,22 +85,6 @@ export const addRepayment = async (req, res) => {
       return res.status(404).json({ message: "Borrower not found" });
 
     borrower.repaymentHistory.push({ loanId, amount, date });
-    await borrower.save();
-    res.status(200).json(borrower);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
-// Update credit score
-export const updateCreditScore = async (req, res) => {
-  try {
-    const { creditScore } = req.body;
-    const borrower = await Borrower.findById(req.params.id);
-    if (!borrower)
-      return res.status(404).json({ message: "Borrower not found" });
-
-    borrower.creditScore = creditScore;
     await borrower.save();
     res.status(200).json(borrower);
   } catch (error) {
