@@ -1,6 +1,7 @@
 import moment from "moment";
 import Loan from "../models/Loan.js";
 import Lender from "../models/Lender.js";
+import Borrower from "../models/Borrower.js";
 
 import mongoose from "mongoose";
 
@@ -23,6 +24,12 @@ export const createLoan = async (req, res) => {
     // Validate required fields
     if (!nic || !amount || !interestRate || !startDate || !repaymentType) {
       throw new Error("All fields are required");
+    }
+
+    // Check if borrower exists
+    const borrower = await Borrower.findOne({ nic }).session(session);
+    if (!borrower) {
+      throw new Error("Borrower with the provided NIC does not exist");
     }
 
     // Parse startDate into a moment object

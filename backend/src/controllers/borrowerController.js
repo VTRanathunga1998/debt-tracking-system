@@ -1,4 +1,5 @@
-import Borrower from "../models/Borrower.js";
+import Borrower from "../models/Borrower.js"; 
+
 
 // Create a new borrower
 export const createBorrower = async (req, res) => {
