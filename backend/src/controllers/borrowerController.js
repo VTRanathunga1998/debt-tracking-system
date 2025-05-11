@@ -1,5 +1,4 @@
-import Borrower from "../models/Borrower.js"; 
-
+import Borrower from "../models/Borrower.js";
 
 // Create a new borrower
 export const createBorrower = async (req, res) => {
@@ -13,9 +12,18 @@ export const createBorrower = async (req, res) => {
 };
 
 // Get all borrowers
+// export const getAllBorrowers = async (req, res) => {
+//   try {
+//     const borrowers = await Borrower.find().populate("activeLoans");
+//     res.status(200).json(borrowers);
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
 export const getAllBorrowers = async (req, res) => {
   try {
-    const borrowers = await Borrower.find().populate("activeLoans");
+    const borrowers = await Borrower.find().select("nic"); 
     res.status(200).json(borrowers);
   } catch (error) {
     res.status(500).json({ message: error.message });

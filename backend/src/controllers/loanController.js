@@ -52,9 +52,11 @@ export const createLoan = async (req, res) => {
     }
 
     // Check for existing active loan (within transaction)
-    const existingLoan = await Loan.findOne({ nic, status: "active" }).session(
-      session
-    );
+    const existingLoan = await Loan.findOne({
+      nic,
+      status: "active",
+      lenderId: lenderId,
+    }).session(session);
 
     if (existingLoan) {
       throw new Error("An active loan already exists for this NIC");
