@@ -30,10 +30,7 @@ const loginLender = async (req, res) => {
       email,
       token,
       lender: {
-        _id: lender._id,
-        nic: lender.nic,
         name: lender.name,
-        email: lender.email,
       },
     });
   } catch (error) {
@@ -209,7 +206,7 @@ const withdrawFunds = async (req, res) => {
 
 const getAccountStatement = async (req, res) => {
   try {
-    const lender = await Lender.findById(req.params.id);
+    const lender = await Lender.findById(req.lender._id);
 
     if (!lender) {
       return res.status(404).json({ error: "Lender not found" });

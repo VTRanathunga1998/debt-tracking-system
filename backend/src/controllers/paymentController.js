@@ -1,6 +1,7 @@
 import Loan from "../models/Loan.js";
 import Lender from "../models/Lender.js";
 import Payment from "../models/Payment.js";
+import Borrower from "../models/Borrower.js";
 import moment from "moment";
 
 // Helper function to validate required fields
@@ -257,6 +258,17 @@ export const makePayment = async (req, res) => {
     });
 
     await payment.save();
+
+    const borrower = await Borrower.findOne({ nic });
+    
+    if (borrower) {
+      borrower.repaymentHistory.push({
+        loanId: existingLoan._id,
+        amount: payAmount,
+        date: new Date(date),
+      });
+      await borrower.save();
+    }
 
     // Update lender's transactions
     const lender = await Lender.findById(existingLoan.lenderId);

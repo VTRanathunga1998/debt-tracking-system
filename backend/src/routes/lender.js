@@ -27,6 +27,6 @@ router.delete("/:id", requireAuth, deleteLender);
 router.put("/:id", requireAuth, updateLender);
 
 //Get Account Statements
-router.get("/account-statements/:id", requireAuth, getAccountStatement);
+router.get("/account-statements", requireAuth, getAccountStatement);
 
 export default router;

@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import {
   ChartBarIcon,
   UsersIcon,
@@ -50,24 +49,17 @@ export default function Dashboard() {
     recentTransactions: [],
   });
 
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
   useEffect(() => {
     const fetchAccountStatement = async () => {
       try {
-        const lenderId = lender?._id; // Use optional chaining to avoid errors
-        if (!lenderId) {
-          setLoading(false);
-          return;
-        }
-
-        const response = await fetch(
-          `http://localhost:4000/api/user/account-statements/${lenderId}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
+        const response = await fetch(`${apiUrl}/user/account-statements`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
 
         if (!response.ok) {
           throw new Error("Failed to fetch account statement");
@@ -108,8 +100,6 @@ export default function Dashboard() {
       </div>
     );
   }
-
-  console.log("Lender Details:", lenderDetails); // Debugging line
 
   // Helper function to get a human-readable activity label
   const getActivityLabel = (type: string): string => {
