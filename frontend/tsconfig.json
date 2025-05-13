@@ -19,8 +19,12 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
-    }
+      "@/*": ["./*"],
+      "lucide-react": ["./node_modules/lucide-react"]
+    },
+    "baseUrl": "./",
+    "typeRoots": ["./node_modules/@types"],
+    "types": ["react"]
   },
   "include": [
     "next-env.d.ts",

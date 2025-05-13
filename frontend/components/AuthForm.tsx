@@ -56,7 +56,7 @@ export default function AuthForm() {
         localStorage.setItem("lender", JSON.stringify(data.lender));
 
         // Redirect to dashboard
-        router.push("/dashboard");
+        router.push("/");
       } else {
         setIsLogin(true);
       }
