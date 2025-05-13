@@ -10,7 +10,7 @@ import {
 import { Transaction } from "../../types/transaction";
 import { useAuth } from "@/context/AuthContext";
 import MetricCard from "../UI/MetricCard";
-import RecentActivities from "./ResentActivities";
+import RecentActivities from "./RecentActivities";
 
 interface DashboardData {
   balance: number;
