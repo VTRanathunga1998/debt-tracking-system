@@ -42,7 +42,7 @@ export const getLoanPortfolioOverview = async (req, res) => {
     const loans = await Loan.find();
 
     const activeLoans = loans.filter((loan) => loan.status === "active").length;
-    const paidLoans = loans.filter((loan) => loan.status === "paid").length;
+    const paidLoans = loans.filter((loan) => loan.status === "completed").length;
     const overdueLoans = loans.filter(
       (loan) => loan.status === "overdue"
     ).length;

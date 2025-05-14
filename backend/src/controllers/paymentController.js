@@ -125,13 +125,27 @@ const updateLoanDetails = async (
   if (repaymentType === "installment") {
     remainingAmount = Math.max(0, loan.dueAmount - payAmount);
     updatedNumOfInstallments = loan.numOfInstallments - coveredInstallments;
-    updatedStatus = remainingAmount > 0 ? "active" : "paid";
+    updatedStatus = remainingAmount > 0 ? "active" : "completed";
+
+    if (updatedStatus === "completed") {
+      // Remove loan from borrower's activeLoans array
+      await Borrower.findOneAndUpdate(
+        { nic: loan.nic },
+        { $pull: { activeLoans: loan._id } }
+      );
+    }
   } else {
     remainingAmount = loan.amount;
     updatedNumOfInstallments = loan.numOfInstallments;
 
     if (payAmount - loan.amount == loan.installmentAmount * monthsGap) {
-      updatedStatus = "paid";
+      updatedStatus = "completed";
+
+      // Remove loan from borrower's activeLoans array
+      await Borrower.findOneAndUpdate(
+        { nic: loan.nic },
+        { $pull: { activeLoans: loan._id } }
+      );
     } else {
       updatedStatus = "active";
     }
@@ -260,7 +274,7 @@ export const makePayment = async (req, res) => {
     await payment.save();
 
     const borrower = await Borrower.findOne({ nic });
-    
+
     if (borrower) {
       borrower.repaymentHistory.push({
         loanId: existingLoan._id,

@@ -40,7 +40,7 @@ const loanSchema = new mongoose.Schema({
   dueAmount: { type: Number, required: true },
   status: {
     type: String,
-    enum: ["active", "paid", "overdue"],
+    enum: ["active", "completed", "overdue"],
     default: "active",
   },
   overdueNotificationSent: { type: Boolean, default: false },

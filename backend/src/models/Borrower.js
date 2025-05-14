@@ -15,6 +15,7 @@ const borrowerSchema = new mongoose.Schema(
         date: Date,
       },
     ],
+    lenderIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Lender" }],
   },
   { timestamps: true }
 );

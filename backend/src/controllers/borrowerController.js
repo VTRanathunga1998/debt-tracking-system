@@ -1,9 +1,36 @@
 import Borrower from "../models/Borrower.js";
+import Loan from "../models/Loan.js";
 
-// Create a new borrower
 export const createBorrower = async (req, res) => {
   try {
-    const newBorrower = new Borrower(req.body);
+    const lenderId = req.lender._id;
+    const { nic, ...rest } = req.body;
+
+    if (!nic || !lenderId) {
+      return res
+        .status(400)
+        .json({ message: "NIC and lenderId are required." });
+    }
+
+    // Check if borrower already exists
+    const existingBorrower = await Borrower.findOne({ nic });
+
+    if (existingBorrower) {
+      // Check if lenderId already exists in lenderIds
+      if (!existingBorrower.lenderIds.includes(lenderId)) {
+        existingBorrower.lenderIds.push(lenderId);
+        await existingBorrower.save();
+      }
+      return res.status(200).json(existingBorrower);
+    }
+
+    // Create new borrower if not exists
+    const newBorrower = new Borrower({
+      nic,
+      lenderIds: [lenderId],
+      ...rest,
+    });
+
     const savedBorrower = await newBorrower.save();
     res.status(201).json(savedBorrower);
   } catch (error) {
@@ -11,20 +38,56 @@ export const createBorrower = async (req, res) => {
   }
 };
 
-// Get all borrowers
-// export const getAllBorrowers = async (req, res) => {
-//   try {
-//     const borrowers = await Borrower.find().populate("activeLoans");
-//     res.status(200).json(borrowers);
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
-
 export const getAllBorrowers = async (req, res) => {
   try {
-    const borrowers = await Borrower.find().select("nic"); 
-    res.status(200).json(borrowers);
+    const lenderId = req.lender._id;
+    const borrowers = await Borrower.find({ lenderIds: lenderId })
+      .populate("activeLoans")
+      .lean();
+
+    const formattedBorrowers = await Promise.all(
+      borrowers.map(async (borrower) => {
+        // Fetch total loans from Loan collection using NIC
+        const totalLoansCount = await Loan.countDocuments({
+          nic: borrower.nic,
+        });
+
+        const lastPayment = borrower.repaymentHistory?.length
+          ? new Date(
+              Math.max(
+                ...borrower.repaymentHistory.map((p) =>
+                  new Date(p.date).getTime()
+                )
+              )
+            )
+              .toISOString()
+              .split("T")[0]
+          : "N/A";
+
+        const latestLoan = await Loan.findOne({
+          nic: borrower.nic,
+          lenderId: lenderId,
+        })
+          .sort({ createdAt: -1 }) // Get the most recent loan
+          .select("status")
+          .lean();
+
+        const status = latestLoan?.status || "completed";
+
+        return {
+          id: borrower.nic,
+          name: borrower.name,
+          email: borrower.email,
+          phone: borrower.phone,
+          totalLoans: totalLoansCount,
+          activeLoans: borrower.activeLoans?.length || 0,
+          lastPayment,
+          status,
+        };
+      })
+    );
+
+    res.status(200).json(formattedBorrowers);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -73,13 +136,23 @@ export const updateBorrower = async (req, res) => {
   }
 };
 
-// Delete borrower
+// Remove lenderId from borrower's lenderIds using NIC
 export const deleteBorrower = async (req, res) => {
   try {
-    const deleted = await Borrower.findByIdAndDelete(req.params.id);
-    if (!deleted)
+    const lenderId = req.lender._id;
+
+    const updated = await Borrower.findOneAndUpdate(
+      { nic: req.params.id }, // Use NIC instead of _id
+      { $pull: { lenderIds: lenderId } },
+      { new: true }
+    );
+
+    if (!updated)
       return res.status(404).json({ message: "Borrower not found" });
-    res.status(200).json({ message: "Borrower deleted successfully" });
+
+    res
+      .status(200)
+      .json({ message: "Lender removed from borrower successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

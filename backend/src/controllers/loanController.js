@@ -120,6 +120,13 @@ export const createLoan = async (req, res) => {
 
     await loan.save({ session });
 
+    // Add loan to borrower's activeLoans array
+    await Borrower.findOneAndUpdate(
+      { nic },
+      { $push: { activeLoans: loan._id } },
+      { session }
+    );
+
     // Add transaction for loan issuance
     const transaction = {
       type: "loan",
