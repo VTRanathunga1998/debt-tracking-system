@@ -9,12 +9,10 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import { Lender } from "../types/lender"; // Import the Lender type
 
 interface AuthContextType {
   token: string | null;
-  lender: Lender | null; // Use the Lender type here
-  login: (token: string, lender: Lender) => void;
+  login: (token: string) => void;
   logout: () => void;
 }
 
@@ -22,30 +20,25 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
-  const [lender, setLender] = useState<Lender | null>(null); // State for lender details
   const [isLoading, setIsLoading] = useState(true); // Prevents hydration errors
   const router = useRouter();
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
-    const storedLender = localStorage.getItem("lender");
 
-    if (storedToken && storedLender) {
+    if (storedToken) {
       setToken(storedToken);
-      setLender(JSON.parse(storedLender));
     }
 
     setIsLoading(false);
   }, []);
 
-  const login = (newToken: string, newLender: Lender) => {
+  const login = (newToken: string) => {
     // Save token and lender details to local storage
     localStorage.setItem("token", newToken);
-    localStorage.setItem("lender", JSON.stringify(newLender));
 
     // Update state
     setToken(newToken);
-    setLender(newLender);
 
     // Redirect to dashboard
     router.push("");
@@ -54,11 +47,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     // Remove token and lender details from local storage
     localStorage.removeItem("token");
-    localStorage.removeItem("lender");
 
     // Reset state
     setToken(null);
-    setLender(null);
 
     // Redirect to login page
     router.push("/auth");
@@ -67,7 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   if (isLoading) return null; // Avoid rendering mismatched UI
 
   return (
-    <AuthContext.Provider value={{ token, lender, login, logout }}>
+    <AuthContext.Provider value={{ token, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

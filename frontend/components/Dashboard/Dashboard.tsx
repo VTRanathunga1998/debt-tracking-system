@@ -11,6 +11,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from "@/context/AuthContext";
+import { decodeToken } from "@/utils/decodeToken";
 
 // Tab components
 import DashboardContent from "./DashboardContent";
@@ -32,7 +33,19 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("Dashboard");
 
   // Access lender details and logout function from AuthContext
-  const { lender, logout } = useAuth();
+  const { token, logout } = useAuth();
+
+  // Decode token payload to get lender info
+  const decoded = token ? decodeToken(token) : null;
+  const lenderName = decoded?.name || "Unknown";
+
+  if (!token || !decoded) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-700">Loading...</p>
+      </div>
+    );
+  }
 
   // Function to render the active tab content
   const renderActiveTabContent = () => {
@@ -51,15 +64,6 @@ export default function Dashboard() {
         return <DashboardContent />;
     }
   };
-
-  // Early return for missing lender
-  if (!lender) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-700">Loading...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -126,7 +130,7 @@ export default function Dashboard() {
               />
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-700">
-                  {lender.name}
+                  {lenderName}
                 </p>
                 <p className="text-xs text-gray-500">Lender</p>
               </div>

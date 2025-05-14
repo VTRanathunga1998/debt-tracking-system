@@ -54,7 +54,6 @@ export default function AuthForm() {
       if (isLogin) {
         // Save token and lender details to local storage
         localStorage.setItem("token", data.token);
-        localStorage.setItem("lender", JSON.stringify(data.lender));
 
         // Redirect to dashboard
         window.location.href = "/";
