@@ -37,6 +37,7 @@ export default function AuthForm() {
     setError("");
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    console.log("API URL:", apiUrl);
 
     const endpoint = isLogin ? "/user/login" : "/user/signup";
     try {
@@ -56,7 +57,7 @@ export default function AuthForm() {
         localStorage.setItem("lender", JSON.stringify(data.lender));
 
         // Redirect to dashboard
-        router.push("/");
+        window.location.href = "/";
       } else {
         setIsLogin(true);
       }

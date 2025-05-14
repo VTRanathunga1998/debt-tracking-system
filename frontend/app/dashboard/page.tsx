@@ -1,11 +1,10 @@
-// app/dashboard/page.tsx
-import Dashboard from '@/components/Dashboard';
+import ProtectedRoute from "@/components/ProtectedRoute";
+import DashboardLayout from "@/components/Dashboard/Dashboard";
 
-export default function DashboardPage() {
+export default function Home() {
   return (
-    <>
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Dashboard</h1>
-      <Dashboard />
-    </>
+    <ProtectedRoute>
+      <DashboardLayout />
+    </ProtectedRoute>
   );
 }
