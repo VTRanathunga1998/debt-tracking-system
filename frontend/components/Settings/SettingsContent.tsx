@@ -1,270 +1,336 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { decodeToken } from "@/utils/decodeToken";
 
 export default function SettingsContent() {
-  const { lender } = useAuth();
+  const { token } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
-  
-  // Form states for different settings
+
   const [profileForm, setProfileForm] = useState({
-    name: lender?.name || "",
-    email: lender?.email || "",
-    phone: "",
+    name: "",
+    email: "",
+    telephone: "",
     address: "",
-    company: ""
   });
-  
+
+  const fetchApiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  useEffect(() => {
+    const fetchLenderData = async () => {
+      try {
+        const decoded = token ? decodeToken(token) : null;
+        if (!decoded?._id) return;
+
+        const res = await fetch(`${fetchApiUrl}/user/getlender`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch lender");
+
+        const data = await res.json();
+
+        setProfileForm({
+          name: data.name || "",
+          email: data.email || "",
+          telephone: data.telephone || "",
+          address: data.address || "",
+        });
+      } catch (err) {
+        console.error("Error fetching lender data:", err);
+      }
+    };
+
+    if (token) fetchLenderData();
+  }, [token]);
+
+  const handleSaveProfile = async () => {
+    try {
+      const res = await fetch(`${fetchApiUrl}/user/updatelender`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(profileForm),
+      });
+
+      if (!res.ok) throw new Error("Update failed");
+
+      alert("Profile updated successfully!");
+    } catch (err) {
+      console.error("Error updating profile:", err);
+      alert("Failed to update profile.");
+    }
+  };
+
+  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setProfileForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
   const [notificationSettings, setNotificationSettings] = useState({
     emailNotifications: true,
     newLoanNotifications: true,
     paymentNotifications: true,
     overdueNotifications: true,
-    marketingEmails: false
+    marketingEmails: false,
   });
-  
-  const handleProfileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setProfileForm(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-  
+
   const handleNotificationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = e.target;
-    setNotificationSettings(prev => ({
+    setNotificationSettings((prev) => ({
       ...prev,
-      [name]: checked
+      [name]: checked,
     }));
   };
-  
+
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
       {/* Settings Tabs */}
       <div className="border-b border-gray-200">
         <div className="flex overflow-x-auto">
-          <button 
+          <button
             className={`px-6 py-4 text-sm font-medium whitespace-nowrap ${
-              activeTab === 'profile' 
-                ? 'border-b-2 border-indigo-600 text-indigo-600' 
-                : 'text-gray-500 hover:text-gray-700'
+              activeTab === "profile"
+                ? "border-b-2 border-indigo-600 text-indigo-600"
+                : "text-gray-500 hover:text-gray-700"
             }`}
-            onClick={() => setActiveTab('profile')}
+            onClick={() => setActiveTab("profile")}
           >
             Profile
           </button>
-          <button 
+          <button
             className={`px-6 py-4 text-sm font-medium whitespace-nowrap ${
-              activeTab === 'notifications' 
-                ? 'border-b-2 border-indigo-600 text-indigo-600' 
-                : 'text-gray-500 hover:text-gray-700'
+              activeTab === "notifications"
+                ? "border-b-2 border-indigo-600 text-indigo-600"
+                : "text-gray-500 hover:text-gray-700"
             }`}
-            onClick={() => setActiveTab('notifications')}
+            onClick={() => setActiveTab("notifications")}
           >
             Notifications
           </button>
-          <button 
+          <button
             className={`px-6 py-4 text-sm font-medium whitespace-nowrap ${
-              activeTab === 'security' 
-                ? 'border-b-2 border-indigo-600 text-indigo-600' 
-                : 'text-gray-500 hover:text-gray-700'
+              activeTab === "security"
+                ? "border-b-2 border-indigo-600 text-indigo-600"
+                : "text-gray-500 hover:text-gray-700"
             }`}
-            onClick={() => setActiveTab('security')}
+            onClick={() => setActiveTab("security")}
           >
             Security
           </button>
-          <button 
+          <button
             className={`px-6 py-4 text-sm font-medium whitespace-nowrap ${
-              activeTab === 'preferences' 
-                ? 'border-b-2 border-indigo-600 text-indigo-600' 
-                : 'text-gray-500 hover:text-gray-700'
+              activeTab === "preferences"
+                ? "border-b-2 border-indigo-600 text-indigo-600"
+                : "text-gray-500 hover:text-gray-700"
             }`}
-            onClick={() => setActiveTab('preferences')}
+            onClick={() => setActiveTab("preferences")}
           >
             Preferences
           </button>
         </div>
       </div>
-      
+
       {/* Settings Content */}
       <div className="p-6">
-        {activeTab === 'profile' && (
-          <div className="space-y-6">
-            <h2 className="text-lg font-medium text-gray-900">Profile Settings</h2>
-            <p className="text-sm text-gray-500">
+        {activeTab === "profile" && (
+          <div className="space-y-6 text-gray-800">
+            <h2 className="text-xl font-semibold text-gray-900">
+              Profile Settings
+            </h2>
+            <p className="text-sm text-gray-600">
               Update your personal information and how it appears in the system.
             </p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block font-medium text-gray-700 mb-1">
                   Full Name
                 </label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   name="name"
                   value={profileForm.name}
                   onChange={handleProfileChange}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block font-medium text-gray-700 mb-1">
                   Email Address
                 </label>
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   name="email"
                   value={profileForm.email}
                   onChange={handleProfileChange}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block font-medium text-gray-700 mb-1">
                   Phone Number
                 </label>
-                <input 
-                  type="tel" 
-                  name="phone"
-                  value={profileForm.phone}
+                <input
+                  type="tel"
+                  name="telephone"
+                  value={profileForm.telephone}
                   onChange={handleProfileChange}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Company
-                </label>
-                <input 
-                  type="text" 
-                  name="company"
-                  value={profileForm.company}
-                  onChange={handleProfileChange}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" 
-                />
-              </div>
-              
+
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block font-medium text-gray-700 mb-1">
                   Address
                 </label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   name="address"
                   value={profileForm.address}
                   onChange={handleProfileChange}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>
-            
+
             <div className="pt-4 flex justify-end">
-              <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+              <button
+                onClick={handleSaveProfile}
+                className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+              >
                 Save Changes
               </button>
             </div>
           </div>
         )}
-        
-        {activeTab === 'notifications' && (
+
+        {activeTab === "notifications" && (
           <div className="space-y-6">
-            <h2 className="text-lg font-medium text-gray-900">Notification Settings</h2>
+            <h2 className="text-lg font-medium text-gray-900">
+              Notification Settings
+            </h2>
             <p className="text-sm text-gray-500">
-              Manage how and when you receive notifications about account activity.
+              Manage how and when you receive notifications about account
+              activity.
             </p>
-            
+
             <div className="space-y-4">
               <div className="flex items-center justify-between py-2 border-b border-gray-100">
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Email Notifications</p>
-                  <p className="text-xs text-gray-500">Receive notifications via email</p>
+                  <p className="text-sm font-medium text-gray-700">
+                    Email Notifications
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Receive notifications via email
+                  </p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     name="emailNotifications"
                     checked={notificationSettings.emailNotifications}
                     onChange={handleNotificationChange}
-                    className="sr-only peer" 
+                    className="sr-only peer"
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                 </label>
               </div>
-              
+
               <div className="flex items-center justify-between py-2 border-b border-gray-100">
                 <div>
-                  <p className="text-sm font-medium text-gray-700">New Loan Notifications</p>
-                  <p className="text-xs text-gray-500">Get notified when a new loan is created</p>
+                  <p className="text-sm font-medium text-gray-700">
+                    New Loan Notifications
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Get notified when a new loan is created
+                  </p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     name="newLoanNotifications"
                     checked={notificationSettings.newLoanNotifications}
                     onChange={handleNotificationChange}
-                    className="sr-only peer" 
+                    className="sr-only peer"
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                 </label>
               </div>
-              
+
               <div className="flex items-center justify-between py-2 border-b border-gray-100">
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Payment Notifications</p>
-                  <p className="text-xs text-gray-500">Get notified when payments are made</p>
+                  <p className="text-sm font-medium text-gray-700">
+                    Payment Notifications
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Get notified when payments are made
+                  </p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     name="paymentNotifications"
                     checked={notificationSettings.paymentNotifications}
                     onChange={handleNotificationChange}
-                    className="sr-only peer" 
+                    className="sr-only peer"
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                 </label>
               </div>
-              
+
               <div className="flex items-center justify-between py-2 border-b border-gray-100">
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Overdue Notifications</p>
-                  <p className="text-xs text-gray-500">Get notified when payments are overdue</p>
+                  <p className="text-sm font-medium text-gray-700">
+                    Overdue Notifications
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Get notified when payments are overdue
+                  </p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     name="overdueNotifications"
                     checked={notificationSettings.overdueNotifications}
                     onChange={handleNotificationChange}
-                    className="sr-only peer" 
+                    className="sr-only peer"
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                 </label>
               </div>
-              
+
               <div className="flex items-center justify-between py-2 border-b border-gray-100">
                 <div>
-                  <p className="text-sm font-medium text-gray-700">Marketing Emails</p>
-                  <p className="text-xs text-gray-500">Receive marketing and promotional emails</p>
+                  <p className="text-sm font-medium text-gray-700">
+                    Marketing Emails
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Receive marketing and promotional emails
+                  </p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     name="marketingEmails"
                     checked={notificationSettings.marketingEmails}
                     onChange={handleNotificationChange}
-                    className="sr-only peer" 
+                    className="sr-only peer"
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                 </label>
               </div>
             </div>
-            
+
             <div className="pt-4 flex justify-end">
               <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                 Save Preferences
@@ -272,43 +338,47 @@ export default function SettingsContent() {
             </div>
           </div>
         )}
-        
-        {activeTab === 'security' && (
+
+        {activeTab === "security" && (
           <div className="space-y-6">
-            <h2 className="text-lg font-medium text-gray-900">Security Settings</h2>
+            <h2 className="text-lg font-medium text-gray-900">
+              Security Settings
+            </h2>
             <p className="text-sm text-gray-500">
               Manage your password and account security options.
             </p>
-            
+
             <div className="space-y-6">
               <div>
-                <h3 className="text-md font-medium text-gray-800 mb-2">Change Password</h3>
+                <h3 className="text-md font-medium text-gray-800 mb-2">
+                  Change Password
+                </h3>
                 <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Current Password
                     </label>
-                    <input 
-                      type="password" 
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                    <input
+                      type="password"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       New Password
                     </label>
-                    <input 
-                      type="password" 
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                    <input
+                      type="password"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Confirm New Password
                     </label>
-                    <input 
-                      type="password" 
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                    <input
+                      type="password"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
                 </div>
@@ -318,19 +388,24 @@ export default function SettingsContent() {
                   </button>
                 </div>
               </div>
-              
+
               <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-md font-medium text-gray-800 mb-2">Two-Factor Authentication</h3>
+                <h3 className="text-md font-medium text-gray-800 mb-2">
+                  Two-Factor Authentication
+                </h3>
                 <p className="text-sm text-gray-500 mb-4">
-                  Add an extra layer of security to your account by enabling two-factor authentication.
+                  Add an extra layer of security to your account by enabling
+                  two-factor authentication.
                 </p>
                 <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                   Enable Two-Factor Authentication
                 </button>
               </div>
-              
+
               <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-md font-medium text-gray-800 mb-2">Active Sessions</h3>
+                <h3 className="text-md font-medium text-gray-800 mb-2">
+                  Active Sessions
+                </h3>
                 <p className="text-sm text-gray-500 mb-4">
                   Manage and sign out of your active sessions.
                 </p>
@@ -338,7 +413,9 @@ export default function SettingsContent() {
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="text-sm font-medium">Current Session</p>
-                      <p className="text-xs text-gray-500">Started 2 hours ago - Chrome on Windows</p>
+                      <p className="text-xs text-gray-500">
+                        Started 2 hours ago - Chrome on Windows
+                      </p>
                     </div>
                     <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
                       Active Now
@@ -349,17 +426,19 @@ export default function SettingsContent() {
             </div>
           </div>
         )}
-        
-        {activeTab === 'preferences' && (
+
+        {activeTab === "preferences" && (
           <div className="space-y-6">
             <h2 className="text-lg font-medium text-gray-900">Preferences</h2>
             <p className="text-sm text-gray-500">
               Customize your application experience.
             </p>
-            
+
             <div className="space-y-6">
               <div>
-                <h3 className="text-md font-medium text-gray-800 mb-2">Theme Settings</h3>
+                <h3 className="text-md font-medium text-gray-800 mb-2">
+                  Theme Settings
+                </h3>
                 <div className="flex gap-4 mt-2">
                   <button className="p-4 border border-gray-200 rounded-lg bg-white hover:border-indigo-500 transition-colors">
                     Light
@@ -372,9 +451,11 @@ export default function SettingsContent() {
                   </button>
                 </div>
               </div>
-              
+
               <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-md font-medium text-gray-800 mb-2">Language</h3>
+                <h3 className="text-md font-medium text-gray-800 mb-2">
+                  Language
+                </h3>
                 <select className="w-full max-w-xs rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500">
                   <option value="en">English</option>
                   <option value="es">Spanish</option>
@@ -382,26 +463,47 @@ export default function SettingsContent() {
                   <option value="de">German</option>
                 </select>
               </div>
-              
+
               <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-md font-medium text-gray-800 mb-2">Date Format</h3>
+                <h3 className="text-md font-medium text-gray-800 mb-2">
+                  Date Format
+                </h3>
                 <div className="space-y-2">
                   <label className="flex items-center">
-                    <input type="radio" name="dateFormat" className="h-4 w-4 text-indigo-600 focus:ring-indigo-500" defaultChecked />
-                    <span className="ml-2 text-sm text-gray-700">MM/DD/YYYY (US)</span>
+                    <input
+                      type="radio"
+                      name="dateFormat"
+                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                      defaultChecked
+                    />
+                    <span className="ml-2 text-sm text-gray-700">
+                      MM/DD/YYYY (US)
+                    </span>
                   </label>
                   <label className="flex items-center">
-                    <input type="radio" name="dateFormat" className="h-4 w-4 text-indigo-600 focus:ring-indigo-500" />
-                    <span className="ml-2 text-sm text-gray-700">DD/MM/YYYY (UK, EU)</span>
+                    <input
+                      type="radio"
+                      name="dateFormat"
+                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">
+                      DD/MM/YYYY (UK, EU)
+                    </span>
                   </label>
                   <label className="flex items-center">
-                    <input type="radio" name="dateFormat" className="h-4 w-4 text-indigo-600 focus:ring-indigo-500" />
-                    <span className="ml-2 text-sm text-gray-700">YYYY-MM-DD (ISO)</span>
+                    <input
+                      type="radio"
+                      name="dateFormat"
+                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">
+                      YYYY-MM-DD (ISO)
+                    </span>
                   </label>
                 </div>
               </div>
             </div>
-            
+
             <div className="pt-4 flex justify-end">
               <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                 Save Preferences

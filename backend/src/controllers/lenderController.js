@@ -69,25 +69,28 @@ const validateSriLankanPhoneNumber = (phoneNumber) => {
   return regex.test(phoneNumber);
 };
 
-// UPDATE LENDER
 const updateLender = async (req, res) => {
-  const { id } = req.params;
-  const { username, email, telephone, password } = req.body;
+  const lenderId = req.lender._id;
+  const { name, email, telephone, address } = req.body;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  // Validate ObjectId
+  if (!mongoose.Types.ObjectId.isValid(lenderId)) {
     return res.status(400).json({ error: "Invalid lender ID" });
   }
 
-  if (!username && !email && !telephone && !password) {
-    return res
-      .status(400)
-      .json({ error: "At least one field must be provided to update" });
+  // Require at least one field
+  if (!name && !email && !telephone && !address) {
+    return res.status(400).json({
+      error: "At least one field must be provided to update",
+    });
   }
 
+  // Validate email
   if (email && !validator.isEmail(email)) {
     return res.status(400).json({ error: "Email is not valid" });
   }
 
+  // Validate telephone
   if (telephone && !validateSriLankanPhoneNumber(telephone)) {
     return res
       .status(400)
@@ -95,44 +98,46 @@ const updateLender = async (req, res) => {
   }
 
   try {
-    const lender = await Lender.findById(id);
-
+    const lender = await Lender.findById(lenderId);
     if (!lender) {
       return res.status(404).json({ error: "Lender not found" });
     }
 
-    if (username) lender.username = username;
+    // Update only provided fields
+    if (name) lender.name = name;
     if (email) lender.email = email;
     if (telephone) lender.telephone = telephone;
-    if (password) lender.password = password;
+    if (address) lender.address = address;
 
     await lender.save();
 
     res.status(200).json({ message: "Lender updated successfully", lender });
   } catch (error) {
-    console.error(error);
+    console.error("Error updating lender:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
-// GET LENDER
+// GET /api/lenders/getlender
 const getLender = async (req, res) => {
-  const { id } = req.params;
-
   try {
-    const lender = await Lender.findById(id);
+    const lender = await Lender.findById(req.lender._id);
+
     if (!lender) {
       return res.status(404).json({ error: "Lender not found" });
     }
 
     const lenderData = {
-      lenderid: lender._id,
-      username: lender.username,
+      nic: lender.nic,
+      name: lender.name,
+      email: lender.email,
+      telephone: lender.telephone,
+      address: lender.address,
     };
 
     res.status(200).json(lenderData);
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching lender:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -231,9 +236,11 @@ const getAccountStatement = async (req, res) => {
     });
 
     // Get the latest 3 transactions
-    const recentTransactions = lender.transactions
-      .sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort by date (newest first)
-      .slice(0, 3); // Take the first 3
+    // const recentTransactions = lender.transactions
+    //   .sort((a, b) => new Date(b.date) - new Date(a.date)) // Sort by date (newest first)
+    //   .slice(0, 3); // Take the first 3
+
+    const recentTransactions = lender.transactions.slice(-3);
 
     res.status(200).json({
       balance: lender.account.balance,

@@ -5,7 +5,7 @@ import { XMarkIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "@/context/AuthContext";
 
 interface Borrower {
-  id: string;
+  _id: string;
   name: string;
   email: string;
   nic: string;
@@ -192,7 +192,7 @@ export default function CreateLoanForm({
                     <div className="absolute z-10 mt-1 w-full bg-white rounded-lg shadow-lg border border-gray-200 max-h-48 overflow-auto">
                       {borrowers.map((borrower) => (
                         <button
-                          key={borrower.id}
+                          key={borrower._id}
                           type="button"
                           onClick={() => {
                             setSelectedBorrower(borrower);

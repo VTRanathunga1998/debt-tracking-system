@@ -19,13 +19,13 @@ router.post("/login", loginLender);
 router.post("/signup", signupLender);
 
 // GET LENDER
-router.get("/getlender/:id", requireAuth, getLender);
+router.get("/getlender", requireAuth, getLender);
 
 // DELETE LENDER
 router.delete("/:id", requireAuth, deleteLender);
 
 // UPDATE LENDER
-router.put("/:id", requireAuth, updateLender);
+router.put("/updatelender", requireAuth, updateLender);
 
 //Get Account Statements
 router.get("/account-statements", requireAuth, getAccountStatement);
