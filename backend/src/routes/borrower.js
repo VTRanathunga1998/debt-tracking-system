@@ -7,6 +7,7 @@ import {
   updateBorrower,
   deleteBorrower,
   addRepayment,
+  searchBorrowers,
 } from "../controllers/borrowerController.js";
 import requireAuth from "../middleware/requireAuth.js";
 
@@ -32,5 +33,7 @@ router.delete("/:id", requireAuth, deleteBorrower);
 
 // Add repayment history to a borrower
 router.post("/:id/repayment", addRepayment);
+
+router.get("/search", requireAuth, searchBorrowers);
 
 export default router;

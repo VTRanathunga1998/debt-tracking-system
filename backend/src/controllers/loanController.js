@@ -144,6 +144,7 @@ export const createLoan = async (req, res) => {
     res.status(201).json(loan);
   } catch (error) {
     await session.abortTransaction();
+    console.error(error.message);
     res.status(400).json({ error: error.message });
   } finally {
     session.endSession();

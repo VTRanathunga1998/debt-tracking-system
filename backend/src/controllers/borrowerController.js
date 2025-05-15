@@ -173,3 +173,24 @@ export const addRepayment = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+export const searchBorrowers = async (req, res) => {
+  try {
+    const query = req.query.q;
+
+    if (!query || query.trim() === "") {
+      return res.status(400).json({ message: "Query is required" });
+    }
+
+    const regex = new RegExp(query, "i"); // case-insensitive search
+
+    const borrowers = await Borrower.find({
+      $or: [{ name: regex }, { email: regex }, { nic: regex }],
+    }).select("id name nic email"); // return only needed fields
+
+    res.status(200).json(borrowers);
+  } catch (error) {
+    console.error("Error searching borrowers:", error);
+    res.status(500).json({ message: "Server error while searching borrowers" });
+  }
+};

@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import { XMarkIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "@/context/AuthContext";
@@ -6,20 +8,17 @@ interface Borrower {
   id: string;
   name: string;
   email: string;
+  nic: string;
 }
 
 interface CreateLoanFormProps {
   isOpen: boolean;
   onClose: () => void;
-  borrowerId?: string;
-  borrowerName?: string;
 }
 
 export default function CreateLoanForm({
   isOpen,
   onClose,
-  borrowerId: initialBorrowerId,
-  borrowerName: initialBorrowerName,
 }: CreateLoanFormProps) {
   const { token } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -27,18 +26,15 @@ export default function CreateLoanForm({
   const [borrowers, setBorrowers] = useState<Borrower[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBorrower, setSelectedBorrower] = useState<Borrower | null>(
-    initialBorrowerId && initialBorrowerName 
-      ? { id: initialBorrowerId, name: initialBorrowerName, email: "" }
-      : null
+    null
   );
-  
+
   const [loanData, setLoanData] = useState({
     amount: "",
     interestRate: "",
-    term: "",
-    paymentFrequency: "monthly",
     startDate: "",
-    purpose: "",
+    repaymentType: "interest-only",
+    numOfInstallments: "",
   });
 
   useEffect(() => {
@@ -50,7 +46,7 @@ export default function CreateLoanForm({
 
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/borrowers/search?q=${searchQuery}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/borrower/search?q=${searchQuery}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -85,18 +81,19 @@ export default function CreateLoanForm({
     setLoading(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/loans/create`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/loans`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          borrowerId: selectedBorrower.id,
-          ...loanData,
+          nic: selectedBorrower.nic,
           amount: parseFloat(loanData.amount),
           interestRate: parseFloat(loanData.interestRate),
-          term: parseInt(loanData.term),
+          startDate: loanData.startDate,
+          repaymentType: loanData.repaymentType,
+          numOfInstallments: parseInt(loanData.numOfInstallments),
         }),
       });
 
@@ -104,15 +101,26 @@ export default function CreateLoanForm({
         throw new Error("Failed to create loan");
       }
 
+      setLoanData({
+        amount: "",
+        interestRate: "",
+        startDate: "",
+        repaymentType: "interest-only",
+        numOfInstallments: "",
+      });
+      setSelectedBorrower(null);
       onClose();
     } catch (err) {
+      console.error(err);
       setError("Failed to create loan. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setLoanData((prev) => ({
       ...prev,
@@ -124,7 +132,7 @@ export default function CreateLoanForm({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="fixed inset-0 bg-black opacity-30"></div>
-        
+
         <div className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-xl font-semibold text-gray-900">
@@ -153,10 +161,12 @@ export default function CreateLoanForm({
               {selectedBorrower ? (
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div>
-                    <p className="font-medium text-gray-500">{selectedBorrower.name}</p>
-                    {selectedBorrower.email && (
-                      <p className="text-sm text-gray-500">{selectedBorrower.email}</p>
-                    )}
+                    <p className="font-medium text-gray-500">
+                      {selectedBorrower.name}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      NIC: {selectedBorrower.nic}
+                    </p>
                   </div>
                   <button
                     type="button"
@@ -191,7 +201,9 @@ export default function CreateLoanForm({
                           className="block w-full text-left px-4 py-2 hover:bg-gray-50"
                         >
                           <p className="font-medium">{borrower.name}</p>
-                          <p className="text-sm text-gray-500">{borrower.email}</p>
+                          <p className="text-sm text-gray-500">
+                            NIC: {borrower.nic}
+                          </p>
                         </button>
                       ))}
                     </div>
@@ -202,7 +214,10 @@ export default function CreateLoanForm({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="amount"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Loan Amount ($)
                 </label>
                 <input
@@ -219,7 +234,10 @@ export default function CreateLoanForm({
               </div>
 
               <div>
-                <label htmlFor="interestRate" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="interestRate"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Interest Rate (%)
                 </label>
                 <input
@@ -237,14 +255,17 @@ export default function CreateLoanForm({
               </div>
 
               <div>
-                <label htmlFor="term" className="block text-sm font-medium text-gray-700 mb-1">
-                  Loan Term (months)
+                <label
+                  htmlFor="numOfInstallments"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  No. of Installments
                 </label>
                 <input
                   type="number"
-                  id="term"
-                  name="term"
-                  value={loanData.term}
+                  id="numOfInstallments"
+                  name="numOfInstallments"
+                  value={loanData.numOfInstallments}
                   onChange={handleChange}
                   className="w-full rounded-lg border border-gray-300 text-gray-500 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   required
@@ -253,26 +274,30 @@ export default function CreateLoanForm({
               </div>
 
               <div>
-                <label htmlFor="paymentFrequency" className="block text-sm font-medium text-gray-700 mb-1">
-                  Payment Frequency
+                <label
+                  htmlFor="repaymentType"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
+                  Repayment Type
                 </label>
                 <select
-                  id="paymentFrequency"
-                  name="paymentFrequency"
-                  value={loanData.paymentFrequency}
+                  id="repaymentType"
+                  name="repaymentType"
+                  value={loanData.repaymentType}
                   onChange={handleChange}
                   className="w-full rounded-lg border border-gray-300 text-gray-500 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   required
                 >
-                  <option value="weekly">Weekly</option>
-                  <option value="biweekly">Bi-weekly</option>
-                  <option value="monthly">Monthly</option>
-                  <option value="quarterly">Quarterly</option>
+                  <option value="interest-only">Interest Only</option>
+                  <option value="installment">Installment</option>
                 </select>
               </div>
 
               <div>
-                <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="startDate"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Start Date
                 </label>
                 <input
@@ -285,21 +310,6 @@ export default function CreateLoanForm({
                   required
                 />
               </div>
-            </div>
-
-            <div>
-              <label htmlFor="purpose" className="block text-sm font-medium text-gray-700 mb-1">
-                Loan Purpose
-              </label>
-              <textarea
-                id="purpose"
-                name="purpose"
-                value={loanData.purpose}
-                onChange={handleChange}
-                rows={3}
-                className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                required
-              />
             </div>
 
             <div className="flex justify-end gap-3 pt-4">
