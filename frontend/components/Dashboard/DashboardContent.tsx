@@ -11,6 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Transaction } from "../../types/transaction";
 import MetricCard from "../UI/MetricCard";
 import RecentActivities from "./RecentActivities";
+import UpdateBalanceDialog from "./UpdateBalanceDialog";
 
 interface DashboardData {
   balance: number;
@@ -32,6 +33,7 @@ interface DecodedToken {
 export default function DashboardContent() {
   const { token } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [isUpdateBalanceOpen, setIsUpdateBalanceOpen] = useState(false);
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     balance: 0,
     totalLent: 0,
@@ -73,6 +75,32 @@ export default function DashboardContent() {
     fetchDashboardData();
   }, [token]);
 
+  const handleUpdateBalance = async (newBalance: number) => {
+    if (!token || !API_URL) return;
+
+    try {
+      const response = await fetch(`${API_URL}/user/update-balance`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ balance: newBalance }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update balance");
+      }
+
+      setDashboardData(prev => ({
+        ...prev,
+        balance: newBalance
+      }));
+    } catch (error) {
+      console.error("Error updating balance:", error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -85,12 +113,14 @@ export default function DashboardContent() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <MetricCard
-        icon={<CurrencyDollarIcon className="h-6 w-6 text-yellow-600" />}
-        iconBgColor="bg-yellow-100"
-        title="Account Balance"
-        value={`$${dashboardData.balance.toLocaleString()}`}
-      />
+      <div onClick={() => setIsUpdateBalanceOpen(true)} className="cursor-pointer">
+        <MetricCard
+          icon={<CurrencyDollarIcon className="h-6 w-6 text-yellow-600" />}
+          iconBgColor="bg-yellow-100"
+          title="Account Balance"
+          value={`$${dashboardData.balance.toLocaleString()}`}
+        />
+      </div>
 
       <MetricCard
         icon={<CurrencyDollarIcon className="h-6 w-6 text-green-600" />}
@@ -128,6 +158,13 @@ export default function DashboardContent() {
         </h3>
         <RecentActivities transactions={dashboardData.recentTransactions} />
       </div>
+
+      <UpdateBalanceDialog
+        isOpen={isUpdateBalanceOpen}
+        onClose={() => setIsUpdateBalanceOpen(false)}
+        currentBalance={dashboardData.balance}
+        onUpdate={handleUpdateBalance}
+      />
     </div>
   );
 }
