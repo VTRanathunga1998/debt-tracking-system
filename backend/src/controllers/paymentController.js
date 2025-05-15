@@ -131,7 +131,12 @@ const updateLoanDetails = async (
       // Remove loan from borrower's activeLoans array
       await Borrower.findOneAndUpdate(
         { nic: loan.nic },
-        { $pull: { activeLoans: loan._id } }
+        {
+          $pull: {
+            activeLoans: loan._id,
+            lenderIds: loan.lenderId,
+          },
+        }
       );
     }
   } else {
@@ -144,7 +149,12 @@ const updateLoanDetails = async (
       // Remove loan from borrower's activeLoans array
       await Borrower.findOneAndUpdate(
         { nic: loan.nic },
-        { $pull: { activeLoans: loan._id } }
+        {
+          $pull: {
+            activeLoans: loan._id,
+            lenderIds: loan.lenderId, // 💡 Remove lenderId as well
+          },
+        }
       );
     } else {
       updatedStatus = "active";
@@ -266,7 +276,7 @@ export const makePayment = async (req, res) => {
     const payment = new Payment({
       loanId: existingLoan._id,
       nic,
-      paidAmount: amount,
+      paidAmount: payAmount,
       date,
       dueAmount: remainingAmount,
     });
