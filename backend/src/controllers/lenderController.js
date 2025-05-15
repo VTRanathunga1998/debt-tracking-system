@@ -161,7 +161,9 @@ const deleteLender = async (req, res) => {
 
 const depositFunds = async (req, res) => {
   try {
-    const { lenderId, amount } = req.body;
+    const lenderId = req.lender._id;
+
+    const { amount } = req.body;
 
     const lender = await Lender.findById(lenderId);
     if (!lender) return res.status(404).json({ error: "Lender not found" });
