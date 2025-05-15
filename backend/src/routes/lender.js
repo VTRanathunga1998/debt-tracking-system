@@ -31,6 +31,6 @@ router.put("/:id", requireAuth, updateLender);
 router.get("/account-statements", requireAuth, getAccountStatement);
 
 // Deposit Funds
-router.get("/deposit-funds", requireAuth, depositFunds);
+router.post("/deposit-funds", requireAuth, depositFunds);
 
 export default router;

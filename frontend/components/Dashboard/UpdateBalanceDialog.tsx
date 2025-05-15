@@ -32,7 +32,7 @@ export default function UpdateBalanceDialog({
       }
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/deposit-funds`,
+        `${process.env.NEXT_PUBLIC_API_URL}/user/deposit-funds`,
         {
           method: "POST",
           headers: {
@@ -49,8 +49,9 @@ export default function UpdateBalanceDialog({
         throw new Error("Failed to update balance");
       }
 
-      const updatedLender = await response.json();
-      onUpdate(updatedLender.account.balance); // update parent state if needed
+      // const updatedLender = await response.json();
+
+      // onUpdate(updatedLender.account.balance); // update parent state if needed
       onClose();
     } catch (error) {
       console.error("Error updating balance:", error);
