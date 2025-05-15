@@ -1,40 +1,34 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { XMarkIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useAuth } from "@/context/AuthContext";
 
 interface Borrower {
-  _id: string;
-  name: string;
-  email: string;
   nic: string;
+  name: string;
+  amount: number;
+   _id: string;
 }
 
-interface CreateLoanFormProps {
+interface CreatePaymentFormProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function CreateLoanForm({
-  isOpen,
-  onClose,
-}: CreateLoanFormProps) {
+export default function CreatePaymentForm({ isOpen, onClose }: CreatePaymentFormProps) {
   const { token } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [borrowers, setBorrowers] = useState<Borrower[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedBorrower, setSelectedBorrower] = useState<Borrower | null>(
-    null
-  );
+    const [borrowers, setBorrowers] = useState<Borrower[]>([]);
+   const [searchQuery, setSearchQuery] = useState("");
+   const [selectedBorrower, setSelectedBorrower] = useState<Borrower | null>(
+     null
+   );
 
-  const [loanData, setLoanData] = useState({
+  const [paymentData, setPaymentData] = useState({
     amount: "",
-    interestRate: "",
-    startDate: "",
-    repaymentType: "interest-only",
-    numOfInstallments: "",
+    paymentDate: new Date().toISOString().split('T')[0],
+    paymentMethod: "cash",
+    notes: "",
   });
 
   useEffect(() => {
@@ -73,7 +67,7 @@ export default function CreateLoanForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedBorrower) {
-      setError("Please select a borrower");
+      setError("Please select a loan");
       return;
     }
 
@@ -81,7 +75,7 @@ export default function CreateLoanForm({
     setLoading(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/loans`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -89,40 +83,38 @@ export default function CreateLoanForm({
         },
         body: JSON.stringify({
           nic: selectedBorrower.nic,
-          amount: parseFloat(loanData.amount),
-          interestRate: parseFloat(loanData.interestRate),
-          startDate: loanData.startDate,
-          repaymentType: loanData.repaymentType,
-          numOfInstallments: parseInt(loanData.numOfInstallments),
+          amount: parseFloat(paymentData.amount),
+          paymentDate: paymentData.paymentDate,
+          paymentMethod: paymentData.paymentMethod,
+          notes: paymentData.notes,
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create loan");
+        throw new Error("Failed to create payment");
       }
 
-      setLoanData({
+      setPaymentData({
         amount: "",
-        interestRate: "",
-        startDate: "",
-        repaymentType: "interest-only",
-        numOfInstallments: "",
+        paymentDate: new Date().toISOString().split('T')[0],
+        paymentMethod: "cash",
+        notes: "",
       });
       setSelectedBorrower(null);
       onClose();
     } catch (err) {
       console.error(err);
-      setError("Failed to create loan. Please try again.");
+      setError("Failed to create payment. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setLoanData((prev) => ({
+    setPaymentData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -135,13 +127,8 @@ export default function CreateLoanForm({
 
         <div className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl p-6">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-semibold text-gray-900">
-              Create New Loan
-            </h3>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-500"
-            >
+            <h3 className="text-xl font-semibold text-gray-900">Record Payment</h3>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
               <XMarkIcon className="h-6 w-6" />
             </button>
           </div>
@@ -153,8 +140,8 @@ export default function CreateLoanForm({
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Borrower Selection */}
-            <div className="space-y-2">
+            {/* Loan Selection */}
+                        <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
                 Select Borrower
               </label>
@@ -214,17 +201,14 @@ export default function CreateLoanForm({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label
-                  htmlFor="amount"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Loan Amount ($)
+                <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1">
+                  Payment Amount ($)
                 </label>
                 <input
                   type="number"
                   id="amount"
                   name="amount"
-                  value={loanData.amount}
+                  value={paymentData.amount}
                   onChange={handleChange}
                   className="w-full rounded-lg border border-gray-300 text-gray-500 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   required
@@ -234,80 +218,51 @@ export default function CreateLoanForm({
               </div>
 
               <div>
-                <label
-                  htmlFor="interestRate"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Interest Rate (%)
-                </label>
-                <input
-                  type="number"
-                  id="interestRate"
-                  name="interestRate"
-                  value={loanData.interestRate}
-                  onChange={handleChange}
-                  className="w-full rounded-lg border border-gray-300 text-gray-500 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  required
-                  min="0"
-                  max="100"
-                  step="0.01"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="numOfInstallments"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  No. of Installments
-                </label>
-                <input
-                  type="number"
-                  id="numOfInstallments"
-                  name="numOfInstallments"
-                  value={loanData.numOfInstallments}
-                  onChange={handleChange}
-                  className="w-full rounded-lg border border-gray-300 text-gray-500 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  required
-                  min="1"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="repaymentType"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Repayment Type
-                </label>
-                <select
-                  id="repaymentType"
-                  name="repaymentType"
-                  value={loanData.repaymentType}
-                  onChange={handleChange}
-                  className="w-full rounded-lg border border-gray-300 text-gray-500 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  required
-                >
-                  <option value="interest-only">Interest Only</option>
-                  <option value="installment">Installment</option>
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="startDate"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Start Date
+                <label htmlFor="paymentDate" className="block text-sm font-medium text-gray-700 mb-1">
+                  Payment Date
                 </label>
                 <input
                   type="date"
-                  id="startDate"
-                  name="startDate"
-                  value={loanData.startDate}
+                  id="paymentDate"
+                  name="paymentDate"
+                  value={paymentData.paymentDate}
                   onChange={handleChange}
                   className="w-full rounded-lg border border-gray-300 text-gray-500 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="paymentMethod" className="block text-sm font-medium text-gray-700 mb-1">
+                  Payment Method
+                </label>
+                <select
+                  id="paymentMethod"
+                  name="paymentMethod"
+                  value={paymentData.paymentMethod}
+                  onChange={handleChange}
+                  className="w-full rounded-lg border border-gray-300 text-gray-500 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  required
+                >
+                  <option value="cash">Cash</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="check">Check</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-2">
+                <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+                  Notes
+                </label>
+                <textarea
+                  id="notes"
+                  name="notes"
+                  value={paymentData.notes}
+                  onChange={handleChange}
+                  rows={3}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  placeholder="Add any additional notes about the payment..."
                 />
               </div>
             </div>
@@ -325,7 +280,7 @@ export default function CreateLoanForm({
                 disabled={loading}
                 className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? "Creating..." : "Create Loan"}
+                {loading ? "Processing..." : "Record Payment"}
               </button>
             </div>
           </form>
