@@ -161,7 +161,13 @@ const deleteLender = async (req, res) => {
 
 const depositFunds = async (req, res) => {
   try {
-    const { lenderId, amount } = req.body;
+    const lenderId = req.lender._id;
+
+    const { amount } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: "Invalid deposit amount" });
+    }
 
     const lender = await Lender.findById(lenderId);
     if (!lender) return res.status(404).json({ error: "Lender not found" });
@@ -175,6 +181,7 @@ const depositFunds = async (req, res) => {
     await lender.save();
     res.status(200).json(lender);
   } catch (error) {
+    console.error(error.message);
     res.status(400).json({ error: error.message });
   }
 };

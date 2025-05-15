@@ -19,13 +19,15 @@ const lenderSchema = new mongoose.Schema(
       {
         type: {
           type: String,
-          enum: ["loan", "payment", "interest"], // Example transaction types
+          enum: ["loan", "payment", "interest", "deposit"], // Example transaction types
           required: true,
         },
         referenceId: {
           type: mongoose.Schema.Types.ObjectId,
-          refPath: "transactions.type", // Dynamic reference
-          required: true,
+          refPath: "transactions.type",
+          required: function () {
+            return this.type !== "deposit";
+          },
         },
         amount: {
           type: Number,

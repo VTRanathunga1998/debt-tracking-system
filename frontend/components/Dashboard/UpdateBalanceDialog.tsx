@@ -20,20 +20,55 @@ export default function UpdateBalanceDialog({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onUpdate(balance);
-    onClose();
+
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        alert("You must be logged in to update the balance.");
+        return;
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/user/deposit-funds`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            amount: balance,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update balance");
+      }
+
+      // const updatedLender = await response.json();
+
+      // onUpdate(updatedLender.account.balance); // update parent state if needed
+      onClose();
+    } catch (error) {
+      console.error("Error updating balance:", error);
+      alert("Failed to update balance");
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
         <div className="fixed inset-0 bg-black opacity-30"></div>
-        
+
         <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Update Balance</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Update Balance
+            </h3>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-500"
