@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
-import { CurrencyDollarIcon, ClockIcon, DocumentTextIcon, ArrowTrendingUpIcon } from "@heroicons/react/24/outline";
+import { CurrencyDollarIcon, ClockIcon, DocumentTextIcon, ArrowTrendingUpIcon, PlusIcon } from "@heroicons/react/24/outline";
+import CreateLoanForm from "./CreateLoanForm";
 
 export default function LoansContent() {
   const [activeView, setActiveView] = useState("all");
+  const [isCreateLoanOpen, setIsCreateLoanOpen] = useState(false);
   
   // This would fetch from an API in a real app
   const loanStats = {
@@ -31,6 +33,18 @@ export default function LoansContent() {
   
   return (
     <div className="space-y-6">
+      {/* Header with Create Loan Button */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold text-gray-800">Manage Loans</h2>
+        <button 
+          onClick={() => setIsCreateLoanOpen(true)}
+          className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+        >
+          <PlusIcon className="h-5 w-5 mr-2" />
+          Create Loan
+        </button>
+      </div>
+      
       {/* Loan Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-xl shadow-sm">
@@ -124,6 +138,12 @@ export default function LoansContent() {
           <p className="text-sm">Loan details would be displayed here based on the selected filter: {activeView}</p>
         </div>
       </div>
+
+      {/* Create Loan Dialog */}
+      <CreateLoanForm
+        isOpen={isCreateLoanOpen}
+        onClose={() => setIsCreateLoanOpen(false)}
+      />
     </div>
   );
 }
