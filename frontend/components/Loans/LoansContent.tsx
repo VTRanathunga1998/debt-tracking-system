@@ -69,6 +69,9 @@ export default function LoansContent() {
                 <p className="text-xl font-bold">
                   ${loanStats.totalLoanAmount.toLocaleString()}
                 </p>
+                <p className="text-xs text-gray-500">
+                  {loanStats.totalLoans} loans
+                </p>
               </div>
             </div>
           </div>
@@ -82,6 +85,9 @@ export default function LoansContent() {
                 <p className="text-sm text-gray-500">Active Loans</p>
                 <p className="text-xl font-bold">
                   ${loanStats.activeLoanAmount.toLocaleString()}
+                </p>
+                <p className="text-xs text-gray-500">
+                  (calculated from active loans)
                 </p>
               </div>
             </div>
@@ -97,6 +103,9 @@ export default function LoansContent() {
                 <p className="text-xl font-bold">
                   ${loanStats.overdueLoanAmount.toLocaleString()}
                 </p>
+                <p className="text-xs text-gray-500">
+                  (calculated from overdue loans)
+                </p>
               </div>
             </div>
           </div>
@@ -111,6 +120,7 @@ export default function LoansContent() {
                 <p className="text-xl font-bold">
                   {loanStats.averageInterestRate}%
                 </p>
+                <p className="text-xs text-gray-500">Across all loans</p>
               </div>
             </div>
           </div>

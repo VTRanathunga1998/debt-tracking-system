@@ -323,3 +323,38 @@ export const makePayment = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+export const getPaymentSummary = async (req, res) => {
+  try {
+    const lenderId = req.lender._id;
+
+    // Step 1: Get all loans for this lender
+    const loans = await Loan.find({ lenderId }, "_id");
+    const loanIds = loans.map((loan) => loan._id);
+
+    // Step 2: Get payments related to those loans
+    const payments = await Payment.find({ loanId: { $in: loanIds } });
+
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // Step 3: Calculate totals
+    const totalPayments = payments.reduce((sum, p) => sum + p.paidAmount, 0);
+    const thisMonth = payments
+      .filter((p) => new Date(p.date) >= firstDayOfMonth)
+      .reduce((sum, p) => sum + p.paidAmount, 0);
+
+    // Optional: Pending and Overdue count based on loan status
+    const pending = await Loan.countDocuments({ lenderId, status: "active" });
+    const overdue = await Loan.countDocuments({ lenderId, status: "overdue" });
+
+    res.status(200).json({
+      totalPayments,
+      thisMonth,
+      pending,
+      overdue,
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
