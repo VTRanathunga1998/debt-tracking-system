@@ -174,3 +174,53 @@ export const updateLoanStatus = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+export const getLoanSummaryForLender = async (req, res) => {
+  try {
+    const lenderId = req.lender._id;
+
+    // Get all loans associated with this lender
+    const loans = await Loan.find({ lenderId });
+
+    if (loans.length === 0) {
+      return res.status(200).json({
+        totalLoanAmount: 0,
+        activeLoanAmount: 0,
+        overdueLoanAmount: 0,
+        averageInterestRate: 0,
+        totalLoans: 0,
+      });
+    }
+
+    // Initialize totals
+    let totalLoanAmount = 0;
+    let activeLoanAmount = 0;
+    let overdueLoanAmount = 0;
+    let totalInterestRate = 0;
+
+    // Aggregate values
+    loans.forEach((loan) => {
+      totalLoanAmount += loan.amount;
+      totalInterestRate += loan.interestRate;
+
+      if (loan.status === "active") {
+        activeLoanAmount += loan.amount;
+      } else if (loan.status === "overdue") {
+        overdueLoanAmount += loan.amount;
+      }
+    });
+
+    const averageInterestRate = totalInterestRate / loans.length;
+
+    return res.status(200).json({
+      totalLoanAmount,
+      activeLoanAmount,
+      overdueLoanAmount,
+      averageInterestRate: parseFloat(averageInterestRate.toFixed(2)),
+      totalLoans: loans.length,
+    });
+  } catch (error) {
+    console.error("Error fetching loan summary:", error);
+    res.status(500).json({ error: "Failed to fetch loan summary" });
+  }
+};
