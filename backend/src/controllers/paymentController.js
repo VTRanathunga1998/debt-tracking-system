@@ -4,17 +4,11 @@ import Payment from "../models/Payment.js";
 import Borrower from "../models/Borrower.js";
 import moment from "moment";
 
-// Helper function to validate required fields
-const validateRequiredFields = (nic, payAmount, date) => {
-  if (!nic || !payAmount || !date) {
-    throw new Error("All fields are required");
-  }
-};
-
 // Helper function to find an active loan for the given NIC
-const findActiveLoan = async (nic) => {
+const findActiveLoan = async (nic, lenderId) => {
   const loan = await Loan.findOne({
     nic,
+    lenderId,
     status: { $in: ["active", "overdue"] },
   });
 
@@ -58,10 +52,7 @@ const validatePaymentAmount = (
   requiredPayment,
   repaymentType,
   installmentAmount,
-  dueAmount,
-  monthsGap,
-  paymentDate,
-  dueDate
+  monthsGap
 ) => {
   if (payAmount < requiredPayment) {
     throw new Error(
@@ -70,8 +61,19 @@ const validatePaymentAmount = (
   }
 
   if (
+    repaymentType === "installment" &&
     payAmount > requiredPayment &&
     payAmount - amount !== installmentAmount * monthsGap
+  ) {
+    throw new Error(
+      `You need to pay only ${requiredPayment} as ${monthsGap} installments are due.`
+    );
+  }
+
+  if (
+    repaymentType === "interest-only" &&
+    payAmount > requiredPayment &&
+    payAmount - requiredPayment !== amount
   ) {
     throw new Error(
       `You need to pay only ${requiredPayment} as ${monthsGap} installments are due.`
@@ -81,18 +83,6 @@ const validatePaymentAmount = (
   if (repaymentType === "installment" && payAmount % installmentAmount !== 0) {
     throw new Error("Amount should be a multiple of installment amount");
   }
-
-  if (repaymentType !== "installment" && payAmount % installmentAmount !== 0) {
-    throw new Error("Amount should be a multiple of installment amount");
-  }
-
-  // if (
-  //   repaymentType === "installment" &&
-  //   payAmount > dueAmount &&
-  //   !(new Date(paymentDate) > new Date(dueDate))
-  // ) {
-  //   throw new Error("Payment exceeds the remaining loan amount");
-  // }
 };
 
 // Helper function to check for duplicate payments
@@ -119,12 +109,10 @@ const updateLoanDetails = async (
   repaymentType
 ) => {
   let remainingAmount;
-  let updatedNumOfInstallments;
   let updatedStatus;
 
   if (repaymentType === "installment") {
     remainingAmount = Math.max(0, loan.dueAmount - payAmount);
-    updatedNumOfInstallments = loan.numOfInstallments - coveredInstallments;
     updatedStatus = remainingAmount > 0 ? "active" : "completed";
 
     if (updatedStatus === "completed") {
@@ -141,7 +129,6 @@ const updateLoanDetails = async (
     }
   } else {
     remainingAmount = loan.amount;
-    updatedNumOfInstallments = loan.numOfInstallments;
 
     if (payAmount - loan.amount == loan.installmentAmount * monthsGap) {
       updatedStatus = "completed";
@@ -175,7 +162,6 @@ const updateLoanDetails = async (
   await Loan.findByIdAndUpdate(loan._id, {
     dueAmount: remainingAmount,
     status: updatedStatus,
-    // numOfInstallments: updatedNumOfInstallments,
     nextInstallmentDate: nextInstallmentDate,
   });
 
@@ -205,15 +191,20 @@ const updateLoanDetails = async (
 // Main function to handle payment
 export const makePayment = async (req, res) => {
   try {
+    const lenderId = req.lender._id;
+
     const { nic, payAmount, date } = req.body;
 
     // Validate required fields
-    validateRequiredFields(nic, payAmount, date);
+    if (!nic || !payAmount || !date) {
+      throw new Error("All fields are required");
+    }
 
     // Parse the date in the correct format
     const paymentDate = moment(date, "YYYY-M-D");
+
     // Find an active loan for the given NIC
-    const existingLoan = await findActiveLoan(nic);
+    const existingLoan = await findActiveLoan(nic, lenderId);
 
     const { installmentAmount, dueAmount, repaymentType, amount } =
       existingLoan;
@@ -241,8 +232,6 @@ export const makePayment = async (req, res) => {
     const requiredPayment =
       existingLoan.installmentAmount * Math.ceil(monthsGap);
 
-    const dueDate = existingLoan.dueDate;
-
     // Validate payment amount
     validatePaymentAmount(
       payAmount,
@@ -250,10 +239,7 @@ export const makePayment = async (req, res) => {
       requiredPayment,
       repaymentType,
       installmentAmount,
-      dueAmount,
-      monthsGap,
-      paymentDate,
-      dueDate
+      monthsGap
     );
 
     // Check for duplicate payments
