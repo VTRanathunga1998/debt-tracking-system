@@ -306,6 +306,7 @@ export const makePayment = async (req, res) => {
       loanStatus: updatedStatus,
     });
   } catch (error) {
+    console.error("Payment error:", error.message);
     res.status(400).json({ error: error.message });
   }
 };

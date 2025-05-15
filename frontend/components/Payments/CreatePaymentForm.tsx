@@ -6,7 +6,7 @@ interface Borrower {
   nic: string;
   name: string;
   amount: number;
-   _id: string;
+  _id: string;
 }
 
 interface CreatePaymentFormProps {
@@ -14,19 +14,22 @@ interface CreatePaymentFormProps {
   onClose: () => void;
 }
 
-export default function CreatePaymentForm({ isOpen, onClose }: CreatePaymentFormProps) {
+export default function CreatePaymentForm({
+  isOpen,
+  onClose,
+}: CreatePaymentFormProps) {
   const { token } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-    const [borrowers, setBorrowers] = useState<Borrower[]>([]);
-   const [searchQuery, setSearchQuery] = useState("");
-   const [selectedBorrower, setSelectedBorrower] = useState<Borrower | null>(
-     null
-   );
+  const [borrowers, setBorrowers] = useState<Borrower[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedBorrower, setSelectedBorrower] = useState<Borrower | null>(
+    null
+  );
 
   const [paymentData, setPaymentData] = useState({
     amount: "",
-    paymentDate: new Date().toISOString().split('T')[0],
+    paymentDate: new Date().toISOString().split("T")[0],
     paymentMethod: "cash",
     notes: "",
   });
@@ -75,43 +78,50 @@ export default function CreatePaymentForm({ isOpen, onClose }: CreatePaymentForm
     setLoading(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          nic: selectedBorrower.nic,
-          amount: parseFloat(paymentData.amount),
-          paymentDate: paymentData.paymentDate,
-          paymentMethod: paymentData.paymentMethod,
-          notes: paymentData.notes,
-        }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/payments/make`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            nic: selectedBorrower.nic,
+            payAmount: parseFloat(paymentData.amount),
+            date: paymentData.paymentDate,
+            paymentMethod: paymentData.paymentMethod,
+            notes: paymentData.notes,
+          }),
+        }
+      );
+
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error("Failed to create payment");
+        throw new Error(data.error || "Failed to create payment");
       }
 
       setPaymentData({
         amount: "",
-        paymentDate: new Date().toISOString().split('T')[0],
+        paymentDate: new Date().toISOString().split("T")[0],
         paymentMethod: "cash",
         notes: "",
       });
       setSelectedBorrower(null);
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("Failed to create payment. Please try again.");
+      setError(err.message || "Failed to create payment. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ) => {
     const { name, value } = e.target;
     setPaymentData((prev) => ({
@@ -127,8 +137,13 @@ export default function CreatePaymentForm({ isOpen, onClose }: CreatePaymentForm
 
         <div className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl p-6">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-semibold text-gray-900">Record Payment</h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
+            <h3 className="text-xl font-semibold text-gray-900">
+              Record Payment
+            </h3>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-500"
+            >
               <XMarkIcon className="h-6 w-6" />
             </button>
           </div>
@@ -141,7 +156,7 @@ export default function CreatePaymentForm({ isOpen, onClose }: CreatePaymentForm
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Loan Selection */}
-                        <div className="space-y-2">
+            <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
                 Select Borrower
               </label>
@@ -201,7 +216,10 @@ export default function CreatePaymentForm({ isOpen, onClose }: CreatePaymentForm
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="amount"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Payment Amount ($)
                 </label>
                 <input
@@ -218,7 +236,10 @@ export default function CreatePaymentForm({ isOpen, onClose }: CreatePaymentForm
               </div>
 
               <div>
-                <label htmlFor="paymentDate" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="paymentDate"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Payment Date
                 </label>
                 <input
@@ -233,7 +254,10 @@ export default function CreatePaymentForm({ isOpen, onClose }: CreatePaymentForm
               </div>
 
               <div>
-                <label htmlFor="paymentMethod" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="paymentMethod"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Payment Method
                 </label>
                 <select
@@ -252,7 +276,10 @@ export default function CreatePaymentForm({ isOpen, onClose }: CreatePaymentForm
               </div>
 
               <div className="md:col-span-2">
-                <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="notes"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Notes
                 </label>
                 <textarea
