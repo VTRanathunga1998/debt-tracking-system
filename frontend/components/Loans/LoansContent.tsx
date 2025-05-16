@@ -8,6 +8,8 @@ import {
   PlusIcon,
 } from "@heroicons/react/24/outline";
 import CreateLoanForm from "./CreateLoanForm";
+import LoanList from "./LoanList";
+import { Loan } from "@/types/loan";
 
 type LoanStats = {
   totalLoanAmount: number;
@@ -21,25 +23,42 @@ export default function LoansContent() {
   const [activeView, setActiveView] = useState("all");
   const [isCreateLoanOpen, setIsCreateLoanOpen] = useState(false);
   const [loanStats, setLoanStats] = useState<LoanStats | null>(null);
+  const [loans, setLoans] = useState<Loan[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchUrl = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
-    const fetchLoanStats = async () => {
+    const fetchLoanData = async () => {
       try {
-        const res = await fetch(`${fetchUrl}/loans/loan-details`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-        const data = await res.json();
-        setLoanStats(data);
+        const [statsRes, loansRes] = await Promise.all([
+          fetch(`${fetchUrl}/loans/loan-details`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }),
+          fetch(`${fetchUrl}/loans`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }),
+        ]);
+
+        const [statsData, loansData] = await Promise.all([
+          statsRes.json(),
+          loansRes.json(),
+        ]);
+
+        setLoanStats(statsData);
+        setLoans(loansData);
       } catch (error) {
-        console.error("Failed to fetch loan stats:", error);
+        console.error("Failed to fetch loan data:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchLoanStats();
+    fetchLoanData();
   }, []);
 
   return (
@@ -148,16 +167,16 @@ export default function LoansContent() {
         </div>
       </div>
 
-      {/* Loan List Placeholder */}
-      <div className="bg-white p-6 rounded-xl shadow-sm min-h-[300px] flex items-center justify-center">
-        <div className="text-center text-gray-500">
-          <DocumentTextIcon className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-          <p className="text-lg font-medium">Loan Management</p>
-          <p className="text-sm">
-            Loan details would be displayed here based on the selected filter:{" "}
-            {activeView}
-          </p>
-        </div>
+      {/* Loan List */}
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        {isLoading ? (
+          <div className="p-6 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+            <p className="mt-4 text-gray-500">Loading loans...</p>
+          </div>
+        ) : (
+          <LoanList loans={loans} view={activeView} />
+        )}
       </div>
 
       {/* Create Loan Dialog */}

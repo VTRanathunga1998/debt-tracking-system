@@ -12,6 +12,7 @@ import { Transaction } from "../../types/transaction";
 import MetricCard from "../UI/MetricCard";
 import RecentActivities from "./RecentActivities";
 import UpdateBalanceDialog from "./UpdateBalanceDialog";
+import LoanOverviewChart from "./LoanOverviewChart";
 
 interface DashboardData {
   balance: number;
@@ -147,8 +148,8 @@ export default function DashboardContent() {
         <h3 className="text-lg text-gray-700 font-semibold mb-4">
           Loan Overview
         </h3>
-        <div className="h-64 bg-gray-50 rounded-lg p-4 flex items-center justify-center">
-          <div className="text-gray-400">Chart Component</div>
+        <div className="h-64">
+          <LoanOverviewChart />
         </div>
       </div>
 
