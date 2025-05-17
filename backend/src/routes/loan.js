@@ -4,6 +4,7 @@ import {
   getLoans,
   updateLoanStatus,
   getLoanSummaryForLender,
+  getMonthlyLoanOverview,
 } from "../controllers/loanController.js";
 import requireAuth from "../middleware/requireAuth.js";
 
@@ -17,6 +18,9 @@ router.get("/loan-details", requireAuth, getLoanSummaryForLender);
 
 // GET /api/loans - Fetch all loans
 router.get("/", requireAuth, getLoans);
+
+// GET Monthly Loan Overview
+router.get("/overview/monthly", requireAuth, getMonthlyLoanOverview);
 
 // PATCH /api/loans/:id - Update loan status
 router.patch("/:id", requireAuth, updateLoanStatus);

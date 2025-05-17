@@ -2,6 +2,7 @@ import moment from "moment";
 import Loan from "../models/Loan.js";
 import Lender from "../models/Lender.js";
 import Borrower from "../models/Borrower.js";
+import Payment from "../models/Payment.js";
 
 import mongoose from "mongoose";
 
@@ -222,5 +223,64 @@ export const getLoanSummaryForLender = async (req, res) => {
   } catch (error) {
     console.error("Error fetching loan summary:", error);
     res.status(500).json({ error: "Failed to fetch loan summary" });
+  }
+};
+
+export const getMonthlyLoanOverview = async (req, res) => {
+  try {
+    const result = await Loan.aggregate([
+      {
+        $lookup: {
+          from: "payments",
+          localField: "_id",
+          foreignField: "loanId",
+          as: "payments",
+        },
+      },
+      {
+        $addFields: {
+          totalPaid: { $sum: "$payments.paidAmount" },
+          month: {
+            $dateToString: {
+              format: "%B %Y", // Or "%Y-%m" for more structured sorting
+              date: { $ifNull: ["$createdAt", "$$NOW"] },
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$month",
+          totalLoans: { $sum: "$amount" },
+          activeLoans: {
+            $sum: {
+              $cond: [{ $lt: ["$totalPaid", "$amount"] }, "$amount", 0],
+            },
+          },
+          repaidLoans: {
+            $sum: {
+              $cond: [{ $gte: ["$totalPaid", "$amount"] }, "$amount", 0],
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          month: "$_id",
+          totalLoans: 1,
+          activeLoans: 1,
+          repaidLoans: 1,
+        },
+      },
+      {
+        $sort: { month: 1 },
+      },
+    ]);
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error("Error fetching monthly loan overview:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };

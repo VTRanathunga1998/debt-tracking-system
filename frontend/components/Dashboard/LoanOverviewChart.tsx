@@ -1,3 +1,4 @@
+//
 import {
   AreaChart,
   Area,
@@ -6,16 +7,16 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend
-} from 'recharts';
+  Legend,
+} from "recharts";
 
 const data = [
-  { month: 'Jan', totalLoans: 45000, activeLoans: 35000, repaidLoans: 10000 },
-  { month: 'Feb', totalLoans: 52000, activeLoans: 40000, repaidLoans: 12000 },
-  { month: 'Mar', totalLoans: 61000, activeLoans: 45000, repaidLoans: 16000 },
-  { month: 'Apr', totalLoans: 67000, activeLoans: 48000, repaidLoans: 19000 },
-  { month: 'May', totalLoans: 75000, activeLoans: 52000, repaidLoans: 23000 },
-  { month: 'Jun', totalLoans: 82000, activeLoans: 55000, repaidLoans: 27000 },
+  { month: "Jan", totalLoans: 45000, activeLoans: 35000, repaidLoans: 10000 },
+  { month: "Feb", totalLoans: 52000, activeLoans: 40000, repaidLoans: 12000 },
+  { month: "Mar", totalLoans: 61000, activeLoans: 45000, repaidLoans: 16000 },
+  { month: "Apr", totalLoans: 67000, activeLoans: 48000, repaidLoans: 19000 },
+  { month: "May", totalLoans: 75000, activeLoans: 52000, repaidLoans: 23000 },
+  { month: "Jun", totalLoans: 82000, activeLoans: 55000, repaidLoans: 27000 },
 ];
 
 export default function LoanOverviewChart() {
@@ -32,16 +33,14 @@ export default function LoanOverviewChart() {
       >
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="month" />
-        <YAxis 
-          tickFormatter={(value) => `$${value.toLocaleString()}`}
-        />
-        <Tooltip 
-          formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
-          labelStyle={{ color: '#111827' }}
+        <YAxis tickFormatter={(value) => `$${value.toLocaleString()}`} />
+        <Tooltip
+          formatter={(value: number) => [`$${value.toLocaleString()}`, ""]}
+          labelStyle={{ color: "#111827" }}
           contentStyle={{
-            backgroundColor: 'white',
-            border: '1px solid #e5e7eb',
-            borderRadius: '0.5rem',
+            backgroundColor: "white",
+            border: "1px solid #e5e7eb",
+            borderRadius: "0.5rem",
           }}
         />
         <Legend />
