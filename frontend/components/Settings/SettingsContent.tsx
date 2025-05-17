@@ -477,6 +477,29 @@ export default function SettingsContent() {
         {activeTab === "preferences" && (
           <div className="space-y-6">
             <h2 className="text-lg font-medium text-gray-900">Preferences</h2>
+            <div className="mb-4">
+              <div className="flex items-center text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                <svg
+                  className="h-5 w-5 text-yellow-600 mr-2"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 8v4m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"
+                  />
+                </svg>
+                <span>
+                  <strong>Coming Soon:</strong> Preferences customization is
+                  currently under development.
+                </span>
+              </div>
+            </div>
+
             <p className="text-sm text-gray-500">
               Customize your application experience.
             </p>

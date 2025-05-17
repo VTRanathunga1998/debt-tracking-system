@@ -93,9 +93,9 @@ export default function DashboardContent() {
         throw new Error("Failed to update balance");
       }
 
-      setDashboardData(prev => ({
+      setDashboardData((prev) => ({
         ...prev,
-        balance: newBalance
+        balance: newBalance,
       }));
     } catch (error) {
       console.error("Error updating balance:", error);
@@ -104,17 +104,19 @@ export default function DashboardContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse text-gray-500">
-          Loading dashboard data...
-        </div>
+      <div className="p-6 text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+        <p className="mt-4 text-gray-500">Loading dashboard data...</p>
       </div>
     );
   }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div onClick={() => setIsUpdateBalanceOpen(true)} className="cursor-pointer">
+      <div
+        onClick={() => setIsUpdateBalanceOpen(true)}
+        className="cursor-pointer"
+      >
         <MetricCard
           icon={<CurrencyDollarIcon className="h-6 w-6 text-yellow-600" />}
           iconBgColor="bg-yellow-100"
