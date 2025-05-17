@@ -219,6 +219,32 @@ export default function SettingsContent() {
             <h2 className="text-lg font-medium text-gray-900">
               Notification Settings
             </h2>
+            <div className="mb-4">
+              <h2 className="text-lg font-medium text-gray-900">
+                Notification Settings
+              </h2>
+              <div className="flex items-center text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-md p-3 mt-2">
+                <svg
+                  className="h-5 w-5 text-yellow-600 mr-2"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 8v4m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"
+                  />
+                </svg>
+                <span>
+                  <strong>Coming Soon:</strong> Notification settings are
+                  currently under development.
+                </span>
+              </div>
+            </div>
+
             <p className="text-sm text-gray-500">
               Manage how and when you receive notifications about account
               activity.
@@ -390,6 +416,27 @@ export default function SettingsContent() {
               </div>
 
               <div className="pt-4 border-t border-gray-200">
+                <div className="flex items-center text-sm text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-2">
+                  <svg
+                    className="h-5 w-5 text-yellow-600 mr-2"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 8v4m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"
+                    />
+                  </svg>
+                  <span>
+                    <strong>Coming Soon:</strong> Two-Factor Authentication is
+                    under development.
+                  </span>
+                </div>
+
                 <h3 className="text-md font-medium text-gray-800 mb-2">
                   Two-Factor Authentication
                 </h3>

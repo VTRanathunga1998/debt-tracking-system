@@ -78,74 +78,78 @@ export default function LoansContent() {
       {/* Loan Stats */}
       {loanStats ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Total Loans */}
           <div className="bg-white p-4 rounded-xl shadow-sm">
             <div className="flex items-center">
               <div className="p-3 bg-indigo-100 rounded-lg">
                 <CurrencyDollarIcon className="h-6 w-6 text-indigo-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm text-gray-500">Total Loans</p>
-                <p className="text-xl font-bold">
+                <p className="text-sm text-gray-700">Total Loans</p>
+                <p className="text-xl font-bold text-gray-900">
                   ${loanStats.totalLoanAmount.toLocaleString()}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-600">
                   {loanStats.totalLoans} loans
                 </p>
               </div>
             </div>
           </div>
 
+          {/* Active Loans */}
           <div className="bg-white p-4 rounded-xl shadow-sm">
             <div className="flex items-center">
               <div className="p-3 bg-green-100 rounded-lg">
                 <ClockIcon className="h-6 w-6 text-green-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm text-gray-500">Active Loans</p>
-                <p className="text-xl font-bold">
+                <p className="text-sm text-gray-700">Active Loans</p>
+                <p className="text-xl font-bold text-gray-900">
                   ${loanStats.activeLoanAmount.toLocaleString()}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-600">
                   (calculated from active loans)
                 </p>
               </div>
             </div>
           </div>
 
+          {/* Overdue Loans */}
           <div className="bg-white p-4 rounded-xl shadow-sm">
             <div className="flex items-center">
               <div className="p-3 bg-red-100 rounded-lg">
                 <DocumentTextIcon className="h-6 w-6 text-red-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm text-gray-500">Overdue Loans</p>
-                <p className="text-xl font-bold">
+                <p className="text-sm text-gray-700">Overdue Loans</p>
+                <p className="text-xl font-bold text-gray-900">
                   ${loanStats.overdueLoanAmount.toLocaleString()}
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-600">
                   (calculated from overdue loans)
                 </p>
               </div>
             </div>
           </div>
 
+          {/* Average Interest Rate */}
           <div className="bg-white p-4 rounded-xl shadow-sm">
             <div className="flex items-center">
               <div className="p-3 bg-yellow-100 rounded-lg">
                 <ArrowTrendingUpIcon className="h-6 w-6 text-yellow-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm text-gray-500">Avg. Interest Rate</p>
-                <p className="text-xl font-bold">
+                <p className="text-sm text-gray-700">Avg. Interest Rate</p>
+                <p className="text-xl font-bold text-gray-900">
                   {loanStats.averageInterestRate}%
                 </p>
-                <p className="text-xs text-gray-500">Across all loans</p>
+                <p className="text-xs text-gray-600">Across all loans</p>
               </div>
             </div>
           </div>
         </div>
       ) : (
-        <p className="text-gray-500">Loading loan stats...</p>
+        <p className="text-gray-600">Loading loan stats...</p>
       )}
 
       {/* Loan Filters */}

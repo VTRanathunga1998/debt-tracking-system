@@ -345,3 +345,25 @@ export const getPaymentSummary = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+
+// GET /payments - payments relevant to logged-in lender
+export const getAllPayments = async (req, res) => {
+  try {
+    const lenderId = req.lender._id;
+
+    // Step 1: Find all loan IDs for this lender
+    const loans = await Loan.find({ lenderId }, { _id: 1 });
+    const loanIds = loans.map((loan) => loan._id);
+
+    // Step 2: Find all payments tied to these loan IDs
+    const payments = await Payment.find({ loanId: { $in: loanIds } }).sort({
+      date: -1,
+    });
+
+    res.status(200).json(payments);
+  } catch (err) {
+    console.error("Error fetching lender payments:", err);
+    res.status(500).json({ error: "Failed to fetch payments" });
+  }
+};
